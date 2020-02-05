@@ -1,0 +1,21 @@
+{
+  "name": "webbugs-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node node_modules/webpack-cli/bin/cli.js",
+    "start": "node node_modules/webpack-cli/bin/cli.js --watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pixi-viewport": "^4.8.0",
+    "pixi.js": "^5.2.1"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^5.1.1",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  }
+}
