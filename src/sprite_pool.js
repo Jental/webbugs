@@ -10,6 +10,7 @@ export default class SpritePool {
     
     this.sprites = {};
     this.textures = namedTextures;
+    console.log('textures', this.textures);
     for (let name in namedTextures) {
       const texture = namedTextures[name];
       this.sprites[name] = Array.from({length:size}, (e, i)=> new pixi.Sprite(texture));

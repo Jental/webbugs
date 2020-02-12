@@ -27,8 +27,8 @@ app.renderer.backgroundColor = 0xfafafa;
 // can then insert into the DOM
 document.body.appendChild(app.view);
 
-const maxScreenSize = 3000.0;
-// const maxScreenSize = 100.0;
+// const maxScreenSize = 3000.0;
+const maxScreenSize = 100.0;
 const worldOuterRadiusPx = maxScreenSize / 2.0 * (1.0 + 1.0 / Math.sqrt(3));
 const worldSize = 2 * worldOuterRadiusPx;
 const cellOuterRadiusPx = 10.0;
@@ -59,8 +59,17 @@ viewport
   .decelerate();
 
 // window.field = new Field(worldOuterRadiusC);
-window.field = new HashMapField(worldOuterRadiusC);
-window.field.fillWithRandom();
+window.field = new Field(worldOuterRadiusC);
+// window.field.get(0,0,0).fillWithRandom();
+// window.field.addPageTopRight(0);
+// window.field.addPageTop(0);
+// window.field.addPageTop(0);
+// window.field.addPageTopLeft(0);
+// window.field.addPageBottomLeft(0);
+// window.field.addPageBottom(0);
+// window.field.addPageBottomRight(0);
+
+window.check = (x,y,z) => window.field.get(0,0,0).isActive(x,y,z);
 
 app.loader
   .add('ant.png')
@@ -71,7 +80,7 @@ app.loader
     namedTextures[TEXTURE_EMPTY] = EmptyCellTexture.create(app.renderer, cellOuterRadiusPx);
     namedTextures[TEXTURE_BUG] = BugCellTexture.create(app.renderer, cellOuterRadiusPx);
     namedTextures[TEXTURE_WALL] = WallCellTexture.create(app.renderer, cellOuterRadiusPx);
-    new SpritePool(namedTextures, 100);
+    new SpritePool(namedTextures, 1000);
 
-    draw(window.field, app, viewport, cellOuterRadiusPx);
+    draw(window.field, app, viewport, worldOuterRadiusC, cellOuterRadiusPx);
   });
