@@ -89,33 +89,11 @@ export default class HashMapPage {
     return false;
   }
 
-  set(x, y, z, playerID) {    
+  set(x, y, z, type, playerID, data) {
     this.grid[this.key(x,y,z)] = {
       type: type,
-      playerID: playerID
+      playerID: playerID,
+      bugID: (data && data.bugID) ? data.bugID : null
     };
-  }
-
-  fillWithRandom() {
-    console.log('grid size [fill]:', Object.keys(this.grid).length);
-    for (let x = - this.radius + 1; x < this.radius - 1; x++) {
-      for (let y = - this.radius + 1; y < this.radius - 1; y++) {
-        const z = 0 - x - y;
-        const rndVal = Math.random() * 10.0;
-        if (rndVal >= 8.0 && rndVal < 9.0) {
-          this.grid[this.key(x,y,z)] = {
-            type: 'bug',
-            playerID : 1
-          };
-        }
-        else if (rndVal >= 9.0 && rndVal < 10.0) {
-          this.grid[this.key(x,y,z)] = {
-            type: 'wall',
-            playerID : 1,
-            bugID: 0
-          };
-        }
-      }
-    }
   }
 }

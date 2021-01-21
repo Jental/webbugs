@@ -7,6 +7,7 @@ const MAX_FIELD_RADIUS_SQ2 = 1000**2;
 //     _
 //    / \
 //    \_/
+//
 export default class Field {
   constructor(pageRadius) {
     this.pageRadius = pageRadius;
@@ -34,7 +35,7 @@ export default class Field {
 
   addPageTopRight(y) {
     let x = 0;
-    let z = 0;
+    let z = -y;
     while (true) {
       const key = this.key(x, y, z);
       if (!this.grid[key]) {
@@ -49,7 +50,7 @@ export default class Field {
   }
   
   addPageTopLeft(z) {
-    let x = 0;
+    let x = -z;
     let y = 0;
     while (true) {
       const key = this.key(x, y, z);
@@ -66,7 +67,7 @@ export default class Field {
 
   addPageBottomRight(z) {
     let x = 0;
-    let y = 0;
+    let y = -z;
     while (true) {
       const key = this.key(x, y, z);
       if (!this.grid[key]) {
@@ -81,7 +82,7 @@ export default class Field {
   }
 
   addPageBottomLeft(y) {
-    let x = 0;
+    let x = -y;
     let z = 0;
     while (true) {
       const key = this.key(x, y, z);
@@ -98,7 +99,7 @@ export default class Field {
 
   addPageTop(x) {
     let y = 0;
-    let z = 0;
+    let z = -x;
     while (true) {
       const key = this.key(x, y, z);
       if (!this.grid[key]) {
@@ -113,7 +114,7 @@ export default class Field {
   }
 
   addPageBottom(x) {
-    let y = 0;
+    let y = -x;
     let z = 0;
     while (true) {
       const key = this.key(x, y, z);
@@ -126,5 +127,77 @@ export default class Field {
       }
     }
     return this.create(x, y, z);
+  }
+
+  getPageTopRight(y) {
+    let x = 1;
+    let z = -y-1;
+    const key = this.key(x, y, z);
+    return this.grid[key];
+  }
+  getPageTopRightXYZ(y) {
+    let x = 1;
+    let z = -y-1;
+    return [x,y,z];
+  }
+  
+  getPageTopLeft(z) {
+    let x = -z-1;
+    let y = 1;
+    const key = this.key(x, y, z);
+    return this.grid[key];
+  }
+  getPageTopLeftXYZ(z) {
+    let x = -z-1;
+    let y = 1;
+    return [x,y,z];
+  }
+
+  getPageBottomRight(z) {
+    let x = 1;
+    let y = -z-1;
+    const key = this.key(x, y, z);
+    return this.grid[key];
+  }
+  getPageBottomRightXYZ(z) {
+    let x = 1;
+    let y = -z-1;
+    return [x,y,z];
+  }
+
+  getPageBottomLeft(y) {
+    let x = -y-1;
+    let z = 1;
+    const key = this.key(x, y, z);
+    return this.grid[key];
+  }
+  getPageBottomLeftXYZ(y) {
+    let x = -y-1;
+    let z = 1;
+    return [x,y,z];
+  }
+
+  getPageTop(x) {
+    let y = 1;
+    let z = -x-1;
+    const key = this.key(x, y, z);
+    return this.grid[key];
+  }
+  getPageTopXYZ(x) {
+    let y = 1;
+    let z = -x-1;
+    return [x,y,z];
+  }
+
+  getPageBottom(x) {
+    let y = -x-1;
+    let z = 1;
+    const key = this.key(x, y, z);
+    return this.grid[key];
+  }
+  getPageBottomXYZ(x) {
+    let y = -x-1;
+    let z = 1;
+    return [x,y,z];
   }
 }

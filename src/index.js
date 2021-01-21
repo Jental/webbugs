@@ -9,6 +9,8 @@ import * as BugCellTexture from './textures/bug_cell.js';
 import * as WallCellTexture from './textures/wall_cell.js';
 import SpritePool from './sprite_pool.js';
 import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL } from './const.js';
+import { fieldRandom } from './test/fields.js';
+
 
 // The application will create a renderer using WebGL, if possible,
 // with a fallback to a canvas render. It will also setup the ticker
@@ -32,7 +34,8 @@ const maxScreenSize = 100.0;
 const worldOuterRadiusPx = maxScreenSize / 2.0 * (1.0 + 1.0 / Math.sqrt(3));
 const worldSize = 2 * worldOuterRadiusPx;
 const cellOuterRadiusPx = 10.0;
-const worldOuterRadiusC = Math.floor(worldOuterRadiusPx / cellOuterRadiusPx);
+// const worldOuterRadiusC = Math.floor(worldOuterRadiusPx / cellOuterRadiusPx);
+const worldOuterRadiusC = 4;
 
 console.log('worldOuterRadiusC', worldOuterRadiusC);
 
@@ -58,18 +61,13 @@ viewport
   .wheel()
   .decelerate();
 
-// window.field = new Field(worldOuterRadiusC);
-window.field = new Field(worldOuterRadiusC);
-// window.field.get(0,0,0).fillWithRandom();
-// window.field.addPageTopRight(0);
-// window.field.addPageTop(0);
-// window.field.addPageTop(0);
-// window.field.addPageTopLeft(0);
-// window.field.addPageBottomLeft(0);
-// window.field.addPageBottom(0);
-// window.field.addPageBottomRight(0);
+window.field = fieldRandom(worldOuterRadiusC);
 
 window.check = (x,y,z) => window.field.get(0,0,0).isActive(x,y,z);
+
+window.redraw = () => {
+  draw(window.field, app, viewport, worldOuterRadiusC, cellOuterRadiusPx);
+};
 
 app.loader
   .add('ant.png')
@@ -82,5 +80,5 @@ app.loader
     namedTextures[TEXTURE_WALL] = WallCellTexture.create(app.renderer, cellOuterRadiusPx);
     new SpritePool(namedTextures, 1000);
 
-    draw(window.field, app, viewport, worldOuterRadiusC, cellOuterRadiusPx);
+    window.redraw();
   });
