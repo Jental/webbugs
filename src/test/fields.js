@@ -26,7 +26,9 @@ const fillPageWithRandom = (field, [pageX,pageY,pageZ]) =>  {
   }
 };
 
-export const fieldRandom = (pageRadius) => {
+export const fieldRandom = () => {
+  const pageRadius = 10;
+  
   const field = new Field(pageRadius);
 
   field.addPageTopRight(0);
@@ -44,8 +46,56 @@ export const fieldRandom = (pageRadius) => {
 
   fillPageWithRandom(field, [0,0,0]);
 
-  return field;
+  return { field, pageRadius };
 };
 
-export const fieldForBorderCopyTest = (worldOuterRadiusC) => {
-}
+export const fieldFullScreenRandom = (worldOuterRadiusPx, cellOuterRadiusPx) => {
+  const pageRadius = Math.floor(worldOuterRadiusPx / cellOuterRadiusPx);
+  const field = new Field(pageRadius);
+
+  fillPageWithRandom(field, [0,0,0]);
+
+  return { field, pageRadius };
+};
+
+export const fieldForBorderCopyTest = () => {
+  const pageRadius = 5;
+  const field = new Field(pageRadius);
+
+  field.addPageTopRight(0);
+  field.addPageTop(0);
+  field.addPageTopLeft(0);
+  field.addPageBottomLeft(0);
+  field.addPageBottom(0);
+  field.addPageBottomRight(0);
+
+  setCell([0,0,0], [0,4,-4], field, {
+    type: 'bug',
+    playerID : 1
+  });
+  setCell([0,0,0], [4,0,-4], field, {
+    type: 'wall',
+    playerID : 1,
+    bugID: 0
+  });
+  setCell([0,0,0], [4,-4,0], field, {
+    type: 'bug',
+    playerID : 1
+  });
+  setCell([0,0,0], [0,-4,4], field, {
+    type: 'wall',
+    playerID : 1,
+    bugID: 0
+  });
+  setCell([0,0,0], [-4,0,4], field, {
+    type: 'bug',
+    playerID : 1
+  });
+  setCell([0,0,0], [-4,4,0], field, {
+    type: 'wall',
+    playerID : 1,
+    bugID: 0
+  });
+
+  return { field, pageRadius };
+};

@@ -9,7 +9,7 @@ import * as BugCellTexture from './textures/bug_cell.js';
 import * as WallCellTexture from './textures/wall_cell.js';
 import SpritePool from './sprite_pool.js';
 import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL } from './const.js';
-import { fieldRandom } from './test/fields.js';
+import { fieldRandom, fieldFullScreenRandom, fieldForBorderCopyTest } from './test/fields.js';
 
 
 // The application will create a renderer using WebGL, if possible,
@@ -34,10 +34,6 @@ const maxScreenSize = 100.0;
 const worldOuterRadiusPx = maxScreenSize / 2.0 * (1.0 + 1.0 / Math.sqrt(3));
 const worldSize = 2 * worldOuterRadiusPx;
 const cellOuterRadiusPx = 10.0;
-// const worldOuterRadiusC = Math.floor(worldOuterRadiusPx / cellOuterRadiusPx);
-const worldOuterRadiusC = 4;
-
-console.log('worldOuterRadiusC', worldOuterRadiusC);
 
 // create viewport
 const viewport = new Viewport({
@@ -61,12 +57,16 @@ viewport
   .wheel()
   .decelerate();
 
-window.field = fieldRandom(worldOuterRadiusC);
+// const fieldData = fieldRandom();
+// const fieldData = fieldFullScreenRandom(worldOuterRadiusPx, cellOuterRadiusPx);
+const fieldData = fieldForBorderCopyTest();
+window.field = fieldData.field;
+const pageRadius = fieldData.pageRadius;
 
 window.check = (x,y,z) => window.field.get(0,0,0).isActive(x,y,z);
 
 window.redraw = () => {
-  draw(window.field, app, viewport, worldOuterRadiusC, cellOuterRadiusPx);
+  draw(window.field, app, viewport, pageRadius, cellOuterRadiusPx);
 };
 
 app.loader
