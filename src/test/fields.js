@@ -49,6 +49,15 @@ export const fieldRandom = () => {
   return { field, pageRadius };
 };
 
+export const fieldSingleRandom = () => {
+  const pageRadius = 10;  
+  const field = new Field(pageRadius);
+
+  fillPageWithRandom(field, [0,0,0]);
+
+  return { field, pageRadius };
+};
+
 export const fieldFullScreenRandom = (worldOuterRadiusPx, cellOuterRadiusPx) => {
   const pageRadius = Math.floor(worldOuterRadiusPx / cellOuterRadiusPx);
   const field = new Field(pageRadius);

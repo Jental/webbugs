@@ -9,7 +9,8 @@ import * as BugCellTexture from './textures/bug_cell.js';
 import * as WallCellTexture from './textures/wall_cell.js';
 import SpritePool from './sprite_pool.js';
 import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL } from './const.js';
-import { fieldRandom, fieldFullScreenRandom, fieldForBorderCopyTest } from './test/fields.js';
+import { fieldRandom, fieldSingleRandom, fieldFullScreenRandom, fieldForBorderCopyTest } from './test/fields.js';
+import { setCell } from './handlers.js';
 
 
 // The application will create a renderer using WebGL, if possible,
@@ -59,7 +60,8 @@ viewport
 
 // const fieldData = fieldRandom();
 // const fieldData = fieldFullScreenRandom(worldOuterRadiusPx, cellOuterRadiusPx);
-const fieldData = fieldForBorderCopyTest();
+// const fieldData = fieldForBorderCopyTest();
+const fieldData = fieldSingleRandom();
 window.field = fieldData.field;
 const pageRadius = fieldData.pageRadius;
 
@@ -67,6 +69,13 @@ window.check = (x,y,z) => window.field.get(0,0,0).isActive(x,y,z);
 
 window.redraw = () => {
   draw(window.field, app, viewport, pageRadius, cellOuterRadiusPx);
+};
+
+window.onCellClick = ([pageX,pageY,pageZ], [cellX,cellY,cellZ]) => {
+  setCell([pageX,pageY,pageZ], [cellX,cellY,cellZ], window.field, {
+    type: 'bug',
+    playerID : 1
+  });
 };
 
 app.loader

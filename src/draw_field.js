@@ -21,12 +21,13 @@ const draw = (field, app, viewport, pageRadius, cellOuterRadius) => {
     const offsetH = page.x * 1.5 * outerRadius;
     const offsetV = (page.z - page.y) * innerRadius;
     console.log(innerRadius, outerRadius, offsetH, offsetV, fieldCenterH + offsetH, fieldCenterV + offsetV);
-    drawPage(page.page, viewport, cellOuterRadius, fieldCenterH + offsetH, fieldCenterV + offsetV);
+    drawPage(page, viewport, cellOuterRadius, fieldCenterH + offsetH, fieldCenterV + offsetV);
   }
 };
 
-const drawPage = (page, viewport, cellOuterRadius, centerH, centerV) => {
-  const innerRadius = cellOuterRadius * Math.sqrt(3) / 2.0;
+const drawPage = (pageData, viewport, cellOuterRadius, centerH, centerV) => {
+  const page = pageData.page;
+  const innerRadius = Math.ceil(cellOuterRadius * Math.sqrt(3) / 2.0);
   const outerRadius = cellOuterRadius;
 
   console.log('center', centerH, centerV);
@@ -37,29 +38,30 @@ const drawPage = (page, viewport, cellOuterRadius, centerH, centerV) => {
     for (let y = - page.radius + 1; y <= page.radius - 1; y++) {
       for (let z = - page.radius + 1; z <= page.radius - 1; z++) {
         if (x + y + z === 0) {
-          const offsetH = (x - y) * (innerRadius + 0.5 + CELL_BORDER);
-          const offsetV = z * 1.5 * (outerRadius + 0.5 +  CELL_BORDER * Math.sqrt(3) / 2);
+          const offsetH = (x - y) / 2 * (2 * innerRadius + 1 + CELL_BORDER);
+          const offsetV = z * (1.5 * outerRadius + 1 + CELL_BORDER * Math.sqrt(3) / 2);
           const cellValue = page.get(x, y, z);
 
-	  let cell = null;
-	  if (cellValue && cellValue.type === 'bug') {
-	    cell = SpritePool.getInstance().get(TEXTURE_BUG);
-	  }
-	  else if (cellValue && cellValue.type === 'wall') {
-	    cell = SpritePool.getInstance().get(TEXTURE_WALL);
-	  }
-	  else {
-	    cell = SpritePool.getInstance().get(TEXTURE_EMPTY);
-	  }
-	  if (cell) {
-	    cell.anchor.x = 0.5;
-	    cell.anchor.y = 0.5;
-	    if (x === 0 && y === 0) {
-	      console.log('cell size', innerRadius, outerRadius);
-	    }
-	    cell.position.set(offsetH, offsetV);
+          let cell = null;
+          if (cellValue && cellValue.type === 'bug') {
+            cell = SpritePool.getInstance().get(TEXTURE_BUG);
+          }
+          else if (cellValue && cellValue.type === 'wall') {
+            cell = SpritePool.getInstance().get(TEXTURE_WALL);
+          }
+          else {
+            cell = SpritePool.getInstance().get(TEXTURE_EMPTY);
+          }
+
+          if (cell) {
+            cell.anchor.x = 0.5;
+            cell.anchor.y = 0.5;
+            if (x === 0 && y === 0) {
+              console.log('cell size', innerRadius, outerRadius);
+            }
+            cell.position.set(offsetH, offsetV);
             pageCtr.addChild(cell);
-	  }
+          }
         }
       }
     }
@@ -67,20 +69,62 @@ const drawPage = (page, viewport, cellOuterRadius, centerH, centerV) => {
 
   pageCtr.interactive = true;
   pageCtr.on('mouseup', (e) => {
-    console.log('mouseup', e.data.global.x, e.data.global.y);
+    console.log('mouseup', e.data.global.x, e.data.global.y, e);
 
-    const clickOffsetH = centerH - e.data.global.x;
-    const clickOffsetV = centerV - e.data.global.y;
-    const clickOffsetZpx = clickOffsetV * 2.0 / Math.sqrt(3);
-    const clickOffsetXpx = clickOffsetH - clickOffsetZpx / 2.0;
-    console.log('offsets[px]', clickOffsetH, clickOffsetV, clickOffsetXpx, clickOffsetZpx);
+    const clickOffsetH = e.data.global.x - centerH;
+    const clickOffsetV = e.data.global.y - centerV;
+    console.log('offsets[px; 2d]', clickOffsetH, clickOffsetV);
 
-    const clickOffsetZc = Math.floor(clickOffsetZpx / (innerRadius + CELL_BORDER));
-    const clickOffsetXc = Math.floor(clickOffsetXpx / (innerRadius + CELL_BORDER));
-    console.log('offsets[c]', clickOffsetXc, clickOffsetZc);
+// offsetH = (x - y) / 2 * (2 * innerRadius + 1 + CELL_BORDER)
+// offsetV = z * (1.5 * outerRadius + 1 + CELL_BORDER * Math.sqrt(3) / 2)
+
+// local2dXOffset = offset from cell center in 2d-coord
+// local2dYOffset = offset from cell center in 2d-coord
+
+// clickOffsetV = cellOffsetV + local2dYoffset
+//              = z * (1.5 * outerRadius + 1 + CELL_BORDER * Math.sqrt(3) / 2) + local2dYoffset
+// =>
+// z = (clickOffsetV - local2dYoffset) / (1.5 * outerRadius + 1 + CELL_BORDER * Math.sqrt(3) / 2)
+//   = clickOffsetV / (1.5 * outerRadius + 1 + CELL_BORDER * Math.sqrt(3) / 2) - local2dYoffset / (1.5 * outerRadius + 1 + CELL_BORDER * Math.sqrt(3) / 2)
+// may be slightly less or mode than (clickOffsetV / (1.5 * outerRadius + 1 + CELL_BORDER * Math.sqrt(3) / 2))
+// depending on local2dYoffset sign
+// => we use Math.round
+// z = Math.round(clickOffsetV / (1.5 * outerRadius + 1 + CELL_BORDER * Math.sqrt(3) / 2))
+
+    const clickOffsetZcNotRounded = Math.abs(clickOffsetV) / (1.5 * outerRadius + 1 + CELL_BORDER * Math.sqrt(3) / 2);
+    const clickOffsetZc = Math.sign(clickOffsetV) * Math.round(clickOffsetZcNotRounded);
+
+// clickOffsetH = cellOffsetH + local2dXoffset
+//              = (x - y) / 2 * (2 * innerRadius + 1 + CELL_BORDER) + local2dXoffset
+//              = (x - (- x - z)) / 2 * (2 * innerRadius + 1 + CELL_BORDER) + local2dXoffset
+//              = (2x + z) / 2 * (2 * innerRadius + 1 + CELL_BORDER) + local2dXoffset
+//              = (x + z / 2) * (2 * innerRadius + 1 + CELL_BORDER) + local2dXoffset
+//              = x * (2 * innerRadius + 1 + CELL_BORDER) + z * (2 * innerRadius + 1 + CELL_BORDER) / 2 + local2dXoffset
+// =>
+// x = (clickOffsetH - z * (2 * innerRadius + 1 + CELL_BORDER) / 2 - local2dXoffset) / (2 * innerRadius + 1 + CELL_BORDER)
+//   = clickOffsetH / (2 * innerRadius + 1 + CELL_BORDER) + - / 2 - local2dXoffset / (2 * innerRadius + 1 + CELL_BORDER)
+// may be slightly less or mode than clickOffsetH / (2 * innerRadius + 1 + CELL_BORDER) - z / 2
+// depending on local2dXoffset sign
+// => we use Math.round
+
+    const clickOffsetXcNotRounded = Math.abs(clickOffsetH) / (2 * innerRadius + 1 + CELL_BORDER) - Math.sign(clickOffsetH) * clickOffsetZc / 2;
+    const clickOffsetXc = Math.sign(clickOffsetH) * Math.round(clickOffsetXcNotRounded);
+
+    const clickOffsetYc = 0 - clickOffsetXc - clickOffsetZc;
+
+    console.log('offsets[for x,z; c; not rounded]', clickOffsetXcNotRounded, clickOffsetZcNotRounded);
+    console.log('offsets[c]', clickOffsetXc, clickOffsetYc, clickOffsetZc);
+
+    setTimeout(() => {
+      window.onCellClick([pageData.x,pageData.y,pageData.z], [clickOffsetXc, clickOffsetYc, clickOffsetZc]);
+    }, 10);
   });
 
   pageCtr.position.set(centerH, centerV);
+
+  while(viewport.children[0]) { 
+    viewport.removeChild(viewport.children[0]);
+  }
   viewport.addChild(pageCtr);
 };
 
