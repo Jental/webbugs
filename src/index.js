@@ -8,8 +8,8 @@ import * as EmptyCellTexture from './textures/empty_cell.js';
 import * as BugCellTexture from './textures/bug_cell.js';
 import * as WallCellTexture from './textures/wall_cell.js';
 import SpritePool from './sprite_pool.js';
-import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL } from './const.js';
-import { fieldRandom, fieldSingleRandom, fieldFullScreenRandom, fieldForBorderCopyTest } from './test/fields.js';
+import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const.js';
+import { fieldRandom, fieldSingleRandom, fieldFullScreenRandom, fieldForBorderCopyTest, fieldForWallConnectionTest } from './test/fields.js';
 import { setCell } from './handlers.js';
 
 
@@ -61,7 +61,8 @@ viewport
 // const fieldData = fieldRandom();
 // const fieldData = fieldFullScreenRandom(worldOuterRadiusPx, cellOuterRadiusPx);
 // const fieldData = fieldForBorderCopyTest();
-const fieldData = fieldSingleRandom();
+// const fieldData = fieldSingleRandom();
+const fieldData = fieldForWallConnectionTest();
 window.field = fieldData.field;
 const pageRadius = fieldData.pageRadius;
 
@@ -74,19 +75,21 @@ window.redraw = () => {
 window.onCellClick = ([pageX,pageY,pageZ], [cellX,cellY,cellZ]) => {
   setCell([pageX,pageY,pageZ], [cellX,cellY,cellZ], window.field, {
     type: 'bug',
-    playerID : 1
+    playerID : 0
   });
 };
 
 app.loader
-  .add('ant.png')
+  .add(['ant0.png', 'ant1.png'])
   .load(() => {
     console.log('textures loaded');
 
     const namedTextures = {};
     namedTextures[TEXTURE_EMPTY] = EmptyCellTexture.create(app.renderer, cellOuterRadiusPx);
-    namedTextures[TEXTURE_BUG] = BugCellTexture.create(app.renderer, cellOuterRadiusPx);
-    namedTextures[TEXTURE_WALL] = WallCellTexture.create(app.renderer, cellOuterRadiusPx);
+    namedTextures[TEXTURE_BUG_0] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, 0);
+    namedTextures[TEXTURE_WALL_0] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 0);
+    namedTextures[TEXTURE_BUG_1] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, 1);
+    namedTextures[TEXTURE_WALL_1] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 1);
     new SpritePool(namedTextures, 1000);
 
     window.redraw();

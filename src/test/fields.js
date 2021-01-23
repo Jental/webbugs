@@ -108,3 +108,118 @@ export const fieldForBorderCopyTest = () => {
 
   return { field, pageRadius };
 };
+
+export const fieldForWallConnectionTest = () => {
+  const pageRadius = 10;
+  const field = new Field(pageRadius);
+
+  setCell([0,0,0], [0,0,0], field, {
+    type: 'bug',
+    playerID : 0
+  });
+  setCell([0,0,0], [4,1,-5], field, {
+    type: 'bug',
+    playerID : 0
+  });
+  setCell([0,0,0], [0,-4,4], field, {
+    type: 'bug',
+    playerID : 1
+  });
+
+  // First wall component
+  setCell([0,0,0], [0,1,-1], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [0,2,-2], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [0,3,-3], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [0,4,-4], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [1,3,-4], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [2,2,-4], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [3,1,-4], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [3,0,-3], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [2,0,-2], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [1,1,-2], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+
+  // Second wall component
+  setCell([0,0,0], [1,-1,0], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [0,-2,2], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [0,-3,3], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [1,-3,2], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [1,-2,1], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+
+  setCell([0,0,0], [-1,0,1], field, {
+    type: 'wall',
+    playerID : 1,
+    bugID: 0
+  });
+  setCell([0,0,0], [-2,0,2], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+  setCell([0,0,0], [-3,0,3], field, {
+    type: 'wall',
+    playerID : 0,
+    bugID: 0
+  });
+
+  return { field, pageRadius };
+};

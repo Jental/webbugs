@@ -1,7 +1,7 @@
 import * as pixi from 'pixi.js';
 
 import SpritePool from './sprite_pool.js';
-import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL } from './const.js';
+import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const.js';
 
 const CELL_BORDER = 3;
 
@@ -44,10 +44,33 @@ const drawPage = (pageData, viewport, cellOuterRadius, centerH, centerV) => {
 
           let cell = null;
           if (cellValue && cellValue.type === 'bug') {
-            cell = SpritePool.getInstance().get(TEXTURE_BUG);
+            let spriteName = null;
+            switch (cellValue.playerID) {
+            case 0:
+              spriteName = TEXTURE_BUG_0;
+              break;
+            case 1:
+              spriteName = TEXTURE_BUG_1;
+              break;
+            }
+            if (spriteName) {
+              cell = SpritePool.getInstance().get(spriteName);
+              console.log('bug cell', cell);
+            }
           }
           else if (cellValue && cellValue.type === 'wall') {
-            cell = SpritePool.getInstance().get(TEXTURE_WALL);
+            let spriteName = null;
+            switch (cellValue.playerID) {
+            case 0:
+              spriteName = TEXTURE_WALL_0;
+              break;
+            case 1:
+              spriteName = TEXTURE_WALL_1;
+              break;
+            }
+            if (spriteName) {
+              cell = SpritePool.getInstance().get(spriteName);
+            }
           }
           else {
             cell = SpritePool.getInstance().get(TEXTURE_EMPTY);

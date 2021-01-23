@@ -1,6 +1,7 @@
 import * as pixi from 'pixi.js';
+import { COLORS } from '../const.js';
 
-const create = (renderer, outerRadius) => {
+const create = (renderer, outerRadius, playerID) => {
   const innerRadiusRaw = outerRadius * Math.sqrt(3) / 2.0;
   const innerRadius = Math.ceil(innerRadiusRaw);
 
@@ -14,8 +15,9 @@ const create = (renderer, outerRadius) => {
 
   const graphics = new pixi.Graphics();
 
-  graphics.lineStyle(1, 0x000000, 1);
-  graphics.beginFill(0x000000);
+  const color = COLORS[playerID];
+  graphics.lineStyle(1, color, 1);
+  graphics.beginFill(color);
 
   const path = [
     centerH - innerRadiusRaw, centerV + outerRadius / 2.0,
