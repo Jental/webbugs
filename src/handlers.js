@@ -99,5 +99,4 @@ const handleBorderCell = ([pageX,pageY,pageZ], page, [x,y,z], field, newValue) =
       neighbour.page.set(nx,ny,nz, newValue.type, newValue.playerID, newValue.data);
     }
   }
-
 };

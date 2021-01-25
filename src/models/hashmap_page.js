@@ -66,21 +66,21 @@ export default class HashMapPage {
       console.log('value', cx, cy, cz, value);
       
       if (!value) {
-	continue;
+        continue;
       }
       else if (value.type === 'bug' && value.playerID === playerID) {
-	return true;
+        return true;
       }
       else if (value.type === 'wall' && value.playerID === playerID) {
-	const neibhours = this.getNeibhours(cx,cy,cz).filter(([nx,ny,nz]) => {
-	  const v = this.get(nx, ny, nz);
-	  return v && v.playerID === playerID
-	    && checkedCells.findIndex(([ccx,ccy,ccz]) => ccx === nx && ccy === ny && ccz === nz) < 0;
-	});
-	console.log('neibhours', cx, cy, cz, neibhours);
-	for (let n in neibhours) {
-	  cellsToCheck.push(n);
-	}
+        const neibhours = this.getNeibhours(cx,cy,cz).filter(([nx,ny,nz]) => {
+          const v = this.get(nx, ny, nz);
+          return v && v.playerID === playerID
+            && checkedCells.findIndex(([ccx,ccy,ccz]) => ccx === nx && ccy === ny && ccz === nz) < 0;
+        });
+        console.log('neibhours', cx, cy, cz, neibhours);
+        for (let n in neibhours) {
+          cellsToCheck.push(n);
+        }
       }
 
       console.log(cellsToCheck);
@@ -93,7 +93,8 @@ export default class HashMapPage {
     this.grid[this.key(x,y,z)] = {
       type: type,
       playerID: playerID,
-      bugID: (data && data.bugID) ? data.bugID : null
+      bugID: (data && data.bugID) ? data.bugID : null,
+      component: (data && data.component) ? data.component : false,
     };
   }
 }
