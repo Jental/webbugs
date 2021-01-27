@@ -208,7 +208,8 @@ export const fieldForWallConnectionTest = () => {
   setCell([0,0,0], [-1,0,1], field, {
     type: 'wall',
     playerID : 1,
-    bugID: 0
+    bugID: 0,
+    isActive: false
   });
   setCell([0,0,0], [-2,0,2], field, {
     type: 'wall',
@@ -218,7 +219,8 @@ export const fieldForWallConnectionTest = () => {
   setCell([0,0,0], [-3,0,3], field, {
     type: 'wall',
     playerID : 0,
-    bugID: 0
+    bugID: 0,
+    isActive: false
   });
 
   return { field, pageRadius };

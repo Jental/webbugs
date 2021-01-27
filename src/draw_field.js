@@ -62,10 +62,10 @@ const drawPage = (pageData, viewport, cellOuterRadius, centerH, centerV) => {
             let spriteName = null;
             switch (cellValue.playerID) {
             case 0:
-              spriteName = TEXTURE_WALL_0;
+              spriteName = cellValue.isActive ? TEXTURE_WALL_0 : (TEXTURE_WALL_0 + '_inactive');
               break;
             case 1:
-              spriteName = TEXTURE_WALL_1;
+              spriteName = cellValue.isActive ? TEXTURE_WALL_1 : (TEXTURE_WALL_1 + '_inactive');
               break;
             }
             if (spriteName) {

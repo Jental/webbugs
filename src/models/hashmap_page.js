@@ -93,8 +93,8 @@ export default class HashMapPage {
     this.grid[this.key(x,y,z)] = {
       type: type,
       playerID: playerID,
-      bugID: (data && data.bugID) ? data.bugID : null,
       component: (data && data.component) ? data.component : false,
+      isActive: (data && data.isActive === false) ? false : true
     };
   }
 }

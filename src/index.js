@@ -10,7 +10,7 @@ import * as WallCellTexture from './textures/wall_cell.js';
 import SpritePool from './sprite_pool.js';
 import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const.js';
 import { fieldRandom, fieldSingleRandom, fieldFullScreenRandom, fieldForBorderCopyTest, fieldForWallConnectionTest } from './test/fields.js';
-import { setCell } from './handlers.js';
+import { setCell, FieldReducer } from './handlers.js';
 
 
 // The application will create a renderer using WebGL, if possible,
@@ -66,16 +66,25 @@ const fieldData = fieldForWallConnectionTest();
 window.field = fieldData.field;
 const pageRadius = fieldData.pageRadius;
 
+
 window.check = (x,y,z) => window.field.get(0,0,0).isActive(x,y,z);
 
 window.redraw = () => {
   draw(window.field, app, viewport, pageRadius, cellOuterRadiusPx);
 };
 
+const fieldReducer = new FieldReducer(window.field, window.redraw);
+
 window.onCellClick = ([pageX,pageY,pageZ], [cellX,cellY,cellZ]) => {
-  setCell([pageX,pageY,pageZ], [cellX,cellY,cellZ], window.field, {
-    type: 'bug',
-    playerID : 0
+  // setCell([pageX,pageY,pageZ], [cellX,cellY,cellZ], window.field, {
+  //   type: 'bug',
+  //   playerID : 0
+  // });
+  fieldReducer.handle({
+    type: 'set_bug',
+    page: {x: pageX, y: pageY, z: pageZ},
+    cell: {x: cellX, y: cellY, z: cellZ},
+    playerID: 0
   });
 };
 
@@ -87,9 +96,11 @@ app.loader
     const namedTextures = {};
     namedTextures[TEXTURE_EMPTY] = EmptyCellTexture.create(app.renderer, cellOuterRadiusPx);
     namedTextures[TEXTURE_BUG_0] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, 0);
-    namedTextures[TEXTURE_WALL_0] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 0);
+    namedTextures[TEXTURE_WALL_0] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 0, true);
+    namedTextures[TEXTURE_WALL_0 + '_inactive'] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 0, false);
     namedTextures[TEXTURE_BUG_1] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, 1);
-    namedTextures[TEXTURE_WALL_1] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 1);
+    namedTextures[TEXTURE_WALL_1] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 1, true);
+    namedTextures[TEXTURE_WALL_1 + '_inactive'] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 1, false);
     new SpritePool(namedTextures, 1000);
 
     window.redraw();
