@@ -78,15 +78,9 @@ export class Page {
     ];
   }
 
-  getNeibhours(p: Coordinates) : Cell[] {
-    return [
-      this.incByX(p),
-      this.decByX(p),
-      this.incByY(p),
-      this.decByY(p),
-      this.incByZ(p),
-      this.decByZ(p)
-    ].map(p2 => this.get(p2));
+  getNeibhours(p: Coordinates) : {p: Coordinates, cell: Cell}[] {
+    return this.getNeibhourCoordinates(p)
+      .map(p2 => ({ p: p2, cell: this.get(p2) }));
   }
 
   get(p: Coordinates) : Cell {
@@ -130,11 +124,13 @@ export class Page {
   }
 
   set(p: Coordinates, value: Cell) : void {
+    console.log('page.set: value:', value);
     this.grid[this.key(p)] = {
       type: value.type,
       playerID: value.playerID,
       componentID: (value && value.componentID) ? value.componentID : null,
       isActive: (value && value.isActive === false) ? false : true
     };
+    console.log('page.set: after', p, this.grid[this.key(p)]);
   }
 }

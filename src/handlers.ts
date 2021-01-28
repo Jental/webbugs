@@ -80,8 +80,31 @@ export class FieldReducer {
     console.log('events: event:', event);
     switch (event.type) {
     case EventType.SetBug:
+      const page = this.field.get(event.p.page);
+      if (!page) {
+        return { events: [], updates: [] }; 
+      }
+
+      if (event.value.playerID === null || event.value.playerID === undefined) {
+        console.warn('processEvent: playerID is missing', event);
+        return { events: [], updates: [] }; 
+      }
+
+      const neighbours = page.getNeibhours(event.p.cell);
+      
+      const newEvents : Event[] =
+        neighbours
+        .filter(n => n.cell && n.cell.type === CellType.Wall && n.cell.playerID == event.value.playerID)
+        .map(n => ({
+          type: EventType.SetWallActive,
+          p: { page: event.p.page, cell: n.p},
+          value: {
+            isActive: true
+          }
+        }));
+
       return {
-        events: [],
+        events: newEvents,
         updates: [{
           p: event.p,
           value: {
@@ -140,7 +163,7 @@ export class FieldReducer {
           update.p.cell,
           {
             type:
-              update.value.type
+              update.value.type !== null && update.value.type !== undefined
               ? update.value.type
               : (value ? value.type : null),
             playerID:

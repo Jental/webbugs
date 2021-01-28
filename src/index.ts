@@ -63,7 +63,12 @@ const fieldData = fieldForWallConnectionTest();
 const field = fieldData.field;
 const pageRadius = fieldData.pageRadius;
 
+//@ts-ignore
+window.field = field;
+
 const onCellClick = (p: FullCoordinates) => {
+  //@ts-ignore
+  const playerID = parseInt(document.querySelector('input[type="radio"][name="active-player"]:checked').value);
   // setCell([pageX,pageY,pageZ], [cellX,cellY,cellZ], field, {
   //   type: 'bug',
   //   playerID : 0
@@ -72,7 +77,7 @@ const onCellClick = (p: FullCoordinates) => {
     type: EventType.SetBug,
     p: p,
     value: {
-      playerID: 0
+      playerID: playerID
     }
   });
 };
