@@ -1,16 +1,22 @@
 import * as pixi from 'pixi.js';
 
-import SpritePool from './sprite_pool.js';
-import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const.js';
+import SpritePool from './sprite_pool';
+import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const';
+import { Field } from './models/field';
+import { Coordinates, FullCoordinates } from './models/coordinates';
+import { Page } from './models/page';
+import { Viewport } from 'pixi-viewport';
+import { CellType } from './models/cell';
 
 const CELL_BORDER = 3;
 
-const draw = (field, app, viewport, pageRadius, cellOuterRadius) => {
+const draw = (field : Field, viewport: Viewport, pageRadius: number, cellOuterRadius: number, onCellClick : (p: FullCoordinates) => void) => {
   console.log(viewport.screenWidth, viewport.screenHeight);
   const fieldCenterH = viewport.screenWidth / 2.0;
   const fieldCenterV = viewport.screenHeight / 2.0;
 
-  for (let page of Object.values(field.grid)) {
+  for (let pp of Object.values(field.coordinates)) {
+    const page = field.get(pp);
     const cellInnerRadius = cellOuterRadius * Math.sqrt(3) / 2.0;
     console.log('draw:', page, pageRadius, cellInnerRadius, cellOuterRadius);
     const outerRadius = (pageRadius * 2 - 1) * (cellInnerRadius + 0.5 + CELL_BORDER) + (3 - CELL_BORDER); // last part - emperical fix
@@ -18,15 +24,14 @@ const draw = (field, app, viewport, pageRadius, cellOuterRadius) => {
           pageRadius % 2 === 0 
           ? ((pageRadius - 2) / 2 * 2 + pageRadius / 2 + 1 + 0.5) * (cellOuterRadius + 0.5) + (pageRadius - 1) * CELL_BORDER * Math.sqrt(3) / 2.0 + (CELL_BORDER * Math.sqrt(3) * (pageRadius - 1) / 4) // last part - emperical fix
           : ((pageRadius - 1) * 1.5 + 1) * (cellOuterRadius + 0.5)  + (pageRadius - 1) * CELL_BORDER * Math.sqrt(3) / 2.0 + (CELL_BORDER * Math.sqrt(3) * (pageRadius - 1) / 4); // last part - emperical fix
-    const offsetH = page.x * 1.5 * outerRadius;
-    const offsetV = (page.z - page.y) * innerRadius;
+    const offsetH = pp.x * 1.5 * outerRadius;
+    const offsetV = (pp.z - pp.y) * innerRadius;
     console.log(innerRadius, outerRadius, offsetH, offsetV, fieldCenterH + offsetH, fieldCenterV + offsetV);
-    drawPage(page, viewport, cellOuterRadius, fieldCenterH + offsetH, fieldCenterV + offsetV);
+    drawPage(page, pp, viewport, cellOuterRadius, fieldCenterH + offsetH, fieldCenterV + offsetV, onCellClick);
   }
 };
 
-const drawPage = (pageData, viewport, cellOuterRadius, centerH, centerV) => {
-  const page = pageData.page;
+const drawPage = (page: Page, pageP: Coordinates, viewport: Viewport, cellOuterRadius: number, centerH: number, centerV: number, onCellClick : (p: FullCoordinates) => void) => {
   const innerRadius = Math.ceil(cellOuterRadius * Math.sqrt(3) / 2.0);
   const outerRadius = cellOuterRadius;
 
@@ -40,10 +45,10 @@ const drawPage = (pageData, viewport, cellOuterRadius, centerH, centerV) => {
         if (x + y + z === 0) {
           const offsetH = (x - y) / 2 * (2 * innerRadius + 1 + CELL_BORDER);
           const offsetV = z * (1.5 * outerRadius + 1 + CELL_BORDER * Math.sqrt(3) / 2);
-          const cellValue = page.get(x, y, z);
+          const cellValue = page.get({ x, y, z });
 
           let cell = null;
-          if (cellValue && cellValue.type === 'bug') {
+          if (cellValue && cellValue.type === CellType.Bug) {
             let spriteName = null;
             switch (cellValue.playerID) {
             case 0:
@@ -58,7 +63,7 @@ const drawPage = (pageData, viewport, cellOuterRadius, centerH, centerV) => {
               console.log('bug cell', cell);
             }
           }
-          else if (cellValue && cellValue.type === 'wall') {
+          else if (cellValue && cellValue.type === CellType.Wall) {
             let spriteName = null;
             switch (cellValue.playerID) {
             case 0:
@@ -139,7 +144,7 @@ const drawPage = (pageData, viewport, cellOuterRadius, centerH, centerV) => {
     console.log('offsets[c]', clickOffsetXc, clickOffsetYc, clickOffsetZc);
 
     setTimeout(() => {
-      window.onCellClick([pageData.x,pageData.y,pageData.z], [clickOffsetXc, clickOffsetYc, clickOffsetZc]);
+      onCellClick({ page: pageP, cell: { x: clickOffsetXc, y: clickOffsetYc, z: clickOffsetZc }});
     }, 10);
   });
 

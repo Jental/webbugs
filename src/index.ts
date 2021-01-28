@@ -1,16 +1,15 @@
 import * as pixi from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 
-import Field from './models/field.js';
-import HashMapField from './models/hashmap_field.js';
-import { draw } from './draw_field.js';
-import * as EmptyCellTexture from './textures/empty_cell.js';
-import * as BugCellTexture from './textures/bug_cell.js';
-import * as WallCellTexture from './textures/wall_cell.js';
-import SpritePool from './sprite_pool.js';
-import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const.js';
-import { fieldRandom, fieldSingleRandom, fieldFullScreenRandom, fieldForBorderCopyTest, fieldForWallConnectionTest } from './test/fields.js';
-import { setCell, FieldReducer } from './handlers.js';
+import { draw } from './draw_field';
+import * as EmptyCellTexture from './textures/empty_cell';
+import * as BugCellTexture from './textures/bug_cell';
+import * as WallCellTexture from './textures/wall_cell';
+import SpritePool from './sprite_pool';
+import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const';
+import { fieldRandom, fieldSingleRandom, fieldFullScreenRandom, fieldForBorderCopyTest, fieldForWallConnectionTest } from './test/fields';
+import { FieldReducer, EventType } from './handlers';
+import { FullCoordinates } from './models/coordinates';
 
 
 // The application will create a renderer using WebGL, if possible,
@@ -49,8 +48,6 @@ const viewport = new Viewport({
 // add the viewport to the stage
 app.stage.addChild(viewport);
 
-window.app = app;
-
 // activate plugins
 viewport
   .drag()
@@ -63,30 +60,28 @@ viewport
 // const fieldData = fieldForBorderCopyTest();
 // const fieldData = fieldSingleRandom();
 const fieldData = fieldForWallConnectionTest();
-window.field = fieldData.field;
+const field = fieldData.field;
 const pageRadius = fieldData.pageRadius;
 
-
-window.check = (x,y,z) => window.field.get(0,0,0).isActive(x,y,z);
-
-window.redraw = () => {
-  draw(window.field, app, viewport, pageRadius, cellOuterRadiusPx);
-};
-
-const fieldReducer = new FieldReducer(window.field, window.redraw);
-
-window.onCellClick = ([pageX,pageY,pageZ], [cellX,cellY,cellZ]) => {
-  // setCell([pageX,pageY,pageZ], [cellX,cellY,cellZ], window.field, {
+const onCellClick = (p: FullCoordinates) => {
+  // setCell([pageX,pageY,pageZ], [cellX,cellY,cellZ], field, {
   //   type: 'bug',
   //   playerID : 0
   // });
   fieldReducer.handle({
-    type: 'set_bug',
-    page: {x: pageX, y: pageY, z: pageZ},
-    cell: {x: cellX, y: cellY, z: cellZ},
-    playerID: 0
+    type: EventType.SetBug,
+    p: p,
+    value: {
+      playerID: 0
+    }
   });
 };
+
+const redraw = () => {
+  draw(field, viewport, pageRadius, cellOuterRadiusPx, onCellClick);
+};
+
+const fieldReducer = new FieldReducer(field, redraw);
 
 app.loader
   .add(['ant0.png', 'ant1.png'])
@@ -103,5 +98,5 @@ app.loader
     namedTextures[TEXTURE_WALL_1 + '_inactive'] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 1, false);
     new SpritePool(namedTextures, 1000);
 
-    window.redraw();
+    redraw();
   });

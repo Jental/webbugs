@@ -1,11 +1,10 @@
 import * as pixi from 'pixi.js';
-import { colors } from '../const.js';
 
-const create = (renderer, outerRadius, playerID) => {
+const create = (renderer: pixi.Renderer, outerRadius: number, playerID: number) => {
   const innerRadiusRaw = outerRadius * Math.sqrt(3) / 2.0;
   const innerRadius = Math.ceil(innerRadiusRaw);
 
-  const texture = pixi.RenderTexture.create(innerRadius * 2 + 1, outerRadius * 2 + 1);
+  const texture = pixi.RenderTexture.create({ width: innerRadius * 2 + 1, height: outerRadius * 2 + 1 });
   // const textureSize = Math.pow(2, Math.floor(Math.log(outerRadius * 2.0) / Math.log(2)) + 1); // Textures are recommended to be 2^-sized and square
   // const texture = pixi.RenderTexture.create(textureSize, textureSize);
   const textureName = `ant${playerID}.png`;

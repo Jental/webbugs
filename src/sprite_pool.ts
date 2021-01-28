@@ -1,9 +1,12 @@
 import * as pixi from 'pixi.js';
 
-let instance = null;
+let instance : SpritePool = null;
 
 export default class SpritePool {
-  constructor(namedTextures, size) {
+  sprites: Record<string, pixi.Sprite[]>;
+  textures: Record<string, pixi.Texture>;
+
+  constructor(namedTextures: Record<string, pixi.Texture>, size: number) {
     if (instance) {
       throw 'SpritePool already initialized';
     }
@@ -19,7 +22,7 @@ export default class SpritePool {
     instance = this;
   }
 
-  static getInstance() {
+  static getInstance() : SpritePool {
     if (!instance) {
       throw 'No SpritePool instance initialized';
     }
@@ -27,7 +30,7 @@ export default class SpritePool {
     return instance;
   }
 
-  get(name) {
+  get(name: string) : pixi.Sprite {
     const ss = this.sprites[name];
     if (ss && ss.length > 0) {
       return ss.pop();
@@ -37,7 +40,7 @@ export default class SpritePool {
     }
   }
 
-  release(name, sprite) {
+  release(name: string, sprite: pixi.Sprite) {
     const ss = this.sprites[name];
     ss.push(sprite);
   }

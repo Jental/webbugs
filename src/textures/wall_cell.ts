@@ -1,11 +1,11 @@
 import * as pixi from 'pixi.js';
-import { COLORS } from '../const.js';
+import { COLORS } from '../const';
 
-const create = (renderer, outerRadius, playerID, isActive) => {
+const create = (renderer: pixi.Renderer, outerRadius: number, playerID: number, isActive: boolean) => {
   const innerRadiusRaw = outerRadius * Math.sqrt(3) / 2.0;
   const innerRadius = Math.ceil(innerRadiusRaw);
 
-  const texture = pixi.RenderTexture.create(innerRadius * 2 + 1, outerRadius * 2 + 1);
+  const texture = pixi.RenderTexture.create({ width: innerRadius * 2 + 1, height: outerRadius * 2 + 1 });
   // const textureSize = Math.pow(2, Math.floor(Math.log(outerRadius * 2.0) / Math.log(2)) + 1); // Textures are recommended to be 2^-sized and square
   // const texture = pixi.RenderTexture.create(textureSize, textureSize);
   const antTexture = pixi.utils.TextureCache['ant.png'];
@@ -15,7 +15,7 @@ const create = (renderer, outerRadius, playerID, isActive) => {
 
   const graphics = new pixi.Graphics();
 
-  const color = COLORS[playerID];
+  const color = parseInt(COLORS[playerID]);
   graphics.lineStyle(1, color, 1);
   if (isActive) {
     graphics.beginFill(color);
