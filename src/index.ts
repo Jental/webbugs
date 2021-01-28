@@ -74,7 +74,7 @@ const onCellClick = (p: FullCoordinates) => {
   //   playerID : 0
   // });
   fieldReducer.handle({
-    type: EventType.SetBug,
+    type: EventType.Click,
     p: p,
     value: {
       playerID: playerID

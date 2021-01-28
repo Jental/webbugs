@@ -5,6 +5,7 @@ import { Field } from './models/field';
 import { Page } from './models/page';
 
 export enum EventType {
+  Click = 'click',
   SetBug = 'set_bug',
   SetWall = 'set_wall',
   SetWallActive = 'set_wall_active',
@@ -66,8 +67,6 @@ export class FieldReducer {
           .unzip()
           .map(_.flatten)
           .value();
-
-    console.log('events: process result:', result);
     
     return {
       // @ts-ignore - type confusion because of map+unzip
@@ -78,15 +77,56 @@ export class FieldReducer {
 
   private processEvent(event: Event) : { events: Event[], updates: Update[] } {
     console.log('events: event:', event);
+    let page;
     switch (event.type) {
-    case EventType.SetBug:
-      const page = this.field.get(event.p.page);
+    case EventType.Click:
+      page = this.field.get(event.p.page);
       if (!page) {
         return { events: [], updates: [] }; 
       }
 
       if (event.value.playerID === null || event.value.playerID === undefined) {
-        console.warn('processEvent: playerID is missing', event);
+        console.warn('processEvent: SetBug: playerID is missing', event);
+        return { events: [], updates: [] }; 
+      }
+
+      const value = page.get(event.p.cell);
+      
+      if (value === null || value === undefined) {
+        return {
+          events: [{
+            type: EventType.SetBug,
+            p: event.p,
+            value: {
+              playerID : event.value.playerID
+            }
+          }],
+          updates: []
+        }
+      }
+      else if (value.type == CellType.Bug && value.playerID != event.value.playerID) {
+        return {
+          events: [{
+            type: EventType.SetWall,
+            p: event.p,
+            value: {
+              playerID : event.value.playerID
+            }
+          }],
+          updates: []
+        }
+      }
+      else {
+        return { events: [], updates: [] };
+      }
+    case EventType.SetBug:
+      page = this.field.get(event.p.page);
+      if (!page) {
+        return { events: [], updates: [] }; 
+      }
+
+      if (event.value.playerID === null || event.value.playerID === undefined) {
+        console.warn('processEvent: SetBug: playerID is missing', event);
         return { events: [], updates: [] }; 
       }
 
