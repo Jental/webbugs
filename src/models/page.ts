@@ -124,13 +124,13 @@ export class Page {
   }
 
   set(p: Coordinates, value: Cell) : void {
-    console.log('page.set: value:', value);
     this.grid[this.key(p)] = {
       type: value.type,
       playerID: value.playerID,
-      componentID: (value && value.componentID) ? value.componentID : null,
-      isActive: (value && value.isActive === false) ? false : true
+      component: (value && value.component !== undefined) ? value.component : null,
+      isActive: (value && value.isActive === false) ? false : true,
+      p: value.p,
+      page: value.page
     };
-    console.log('page.set: after', p, this.grid[this.key(p)]);
   }
 }

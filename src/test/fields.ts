@@ -1,7 +1,8 @@
 import { Field } from '../models/field';
-import { setCell } from '../handlers';
+import { EventType, FieldReducer, setCell } from '../handlers';
 import { Coordinates } from '../models/coordinates';
 import { CellType } from '../models/cell';
+import { Component } from 'src/models/component';
 
 const fillPageWithRandom = (field : Field, pageP: Coordinates) : void =>  {
   const page = field.get(pageP);
@@ -16,7 +17,9 @@ const fillPageWithRandom = (field : Field, pageP: Coordinates) : void =>  {
             field, 
             {
               type: CellType.Bug,
-              playerID : 1
+              playerID : 1,
+              page: page,
+              p: { x,y,z }
             });
         }
         else if (rndVal >= 9.0 && rndVal < 10.0) {
@@ -25,7 +28,9 @@ const fillPageWithRandom = (field : Field, pageP: Coordinates) : void =>  {
             field, 
             {
               type: CellType.Wall,
-              playerID : 1
+              playerID : 1,
+              page: page,
+              p: {x,y,z}
             });
         }
       }
@@ -74,221 +79,229 @@ export const fieldFullScreenRandom = (worldOuterRadiusPx, cellOuterRadiusPx) => 
   return { field, pageRadius };
 };
 
-export const fieldForBorderCopyTest = () => {
-  const pageRadius = 5;
-  const field = new Field(pageRadius);
+// export const fieldForBorderCopyTest = () => {
+//   const pageRadius = 5;
+//   const field = new Field(pageRadius);
 
-  field.addPageTopRight(0);
-  field.addPageTop(0);
-  field.addPageTopLeft(0);
-  field.addPageBottomLeft(0);
-  field.addPageBottom(0);
-  field.addPageBottomRight(0);
+//   field.addPageTopRight(0);
+//   field.addPageTop(0);
+//   field.addPageTopLeft(0);
+//   field.addPageBottomLeft(0);
+//   field.addPageBottom(0);
+//   field.addPageBottomRight(0);
 
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 4, z: -4 }},
-    field,
-    {
-      type: CellType.Bug,
-      playerID : 1
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 4, y: 0, z: -4 }},
-    field,
-    {
-      type: CellType.Wall,
-      playerID : 1
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 4, y: -4, z: 0 }},
-    field,
-    {
-      type: CellType.Bug,
-      playerID : 1
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -4, z: 4 }},
-    field,
-    {
-      type: CellType.Wall,
-      playerID : 1
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: -4, y: 0, z: 4 }},
-    field,
-    {
-      type: CellType.Bug,
-      playerID : 1
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: -4, y: 4, z: 0 }},
-    field,
-    {
-      type: CellType.Wall,
-      playerID : 1
-    });
+//   setCell(
+//     { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 4, z: -4 }},
+//     field,
+//     {
+//       type: CellType.Bug,
+//       playerID : 1,
+//       page: p
+//     });
+//   setCell(
+//     { page: {x: 0, y: 0, z: 0 }, cell: { x: 4, y: 0, z: -4 }},
+//     field,
+//     {
+//       type: CellType.Wall,
+//       playerID : 1
+//     });
+//   setCell(
+//     { page: {x: 0, y: 0, z: 0 }, cell: { x: 4, y: -4, z: 0 }},
+//     field,
+//     {
+//       type: CellType.Bug,
+//       playerID : 1
+//     });
+//   setCell(
+//     { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -4, z: 4 }},
+//     field,
+//     {
+//       type: CellType.Wall,
+//       playerID : 1
+//     });
+//   setCell(
+//     { page: {x: 0, y: 0, z: 0 }, cell: { x: -4, y: 0, z: 4 }},
+//     field,
+//     {
+//       type: CellType.Bug,
+//       playerID : 1
+//     });
+//   setCell(
+//     { page: {x: 0, y: 0, z: 0 }, cell: { x: -4, y: 4, z: 0 }},
+//     field,
+//     {
+//       type: CellType.Wall,
+//       playerID : 1
+//     });
 
-  return { field, pageRadius };
-};
+//   return { field, pageRadius };
+// };
 
-export const fieldForWallConnectionTest = () => {
+export const fieldForWallConnectionTest = (redrawFn: (field: Field, pageRadius: number, fieldReducer: FieldReducer) => void) : {
+  field: Field,
+  pageRadius: number,
+  components: Record<string, Component>,
+  reducer: FieldReducer
+} => {
   const pageRadius = 10;
   const field = new Field(pageRadius);
+  const components : Record<string, Component> = {};
+  const reducer = new FieldReducer(field, components, () => redrawFn(field, pageRadius, reducer));
 
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 0, z: 0 }},
-    field,
-    {
-      type: CellType.Bug,
+  reducer.handle({
+    type: EventType.SetBug,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 0, z: 0 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 4, y: 1, z: -5 }},
-    field,
-    {
-      type: CellType.Bug,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetBug,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 4, y: 1, z: -5 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -4, z: 4 }},
-    field,
-    {
-      type: CellType.Bug,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetBug,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -4, z: 4 }},
+    value: {
       playerID : 1
-    });
+    }
+  });
 
   // First wall component
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 1, z: -1 }},
-    field,
-    {
-      type: CellType.Wall,
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 1, z: -1 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 2, z: -2 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 2, z: -2 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 3, z: -3 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 3, z: -3 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 4, z: -4 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 4, z: -4 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: 3, z: -4 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: 3, z: -4 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 2, y: 2, z: -4 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 2, y: 2, z: -4 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 3, y: 1, z: -4 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 3, y: 1, z: -4 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 3, y: 0, z: -3 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 3, y: 0, z: -3 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 2, y: 0, z: -2 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 2, y: 0, z: -2 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: 1, z: -2 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: 1, z: -2 }},
+    value: {
       playerID : 0
-    });
+    }
+  });
 
   // Second wall component
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -1, z: 0 }},
-    field,
-    {
-      type: CellType.Wall,
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -1, z: 0 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -2, z: 2 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -2, z: 2 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -3, z: 3 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -3, z: 3 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -3, z: 2 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -3, z: 2 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -2, z: 1 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -2, z: 1 }},
+    value: {
       playerID : 0
-    });
+    }
+  });
 
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: -1, y: 0, z: 1 }},
-    field,
-    {
-      type: CellType.Wall,
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: -1, y: 0, z: 1 }},
+    value: {
       playerID : 1,
       isActive: false
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: -2, y: 0, z: 2 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: -2, y: 0, z: 2 }},
+    value: {
       playerID : 0
-    });
-  setCell(
-    { page: {x: 0, y: 0, z: 0 }, cell: { x: -3, y: 0, z: 3 }},
-    field,
-    {
-      type: CellType.Wall,
+    }
+  });
+  reducer.handle({
+    type: EventType.SetWall,
+    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: -3, y: 0, z: 3 }},
+    value: {
       playerID : 0,
       isActive: false
-    });
+    }
+  });
 
-  return { field, pageRadius };
+  return { field, pageRadius, components, reducer };
 };

@@ -7,9 +7,11 @@ import * as BugCellTexture from './textures/bug_cell';
 import * as WallCellTexture from './textures/wall_cell';
 import SpritePool from './sprite_pool';
 import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const';
-import { fieldRandom, fieldSingleRandom, fieldFullScreenRandom, fieldForBorderCopyTest, fieldForWallConnectionTest } from './test/fields';
+import { fieldRandom, fieldSingleRandom, fieldFullScreenRandom, fieldForWallConnectionTest } from './test/fields';
 import { FieldReducer, EventType } from './handlers';
 import { FullCoordinates } from './models/coordinates';
+import { Component } from './models/component';
+import { Field } from './models/field';
 
 
 // The application will create a renderer using WebGL, if possible,
@@ -55,18 +57,13 @@ viewport
   .wheel()
   .decelerate();
 
+
 // const fieldData = fieldRandom();
 // const fieldData = fieldFullScreenRandom(worldOuterRadiusPx, cellOuterRadiusPx);
 // const fieldData = fieldForBorderCopyTest();
 // const fieldData = fieldSingleRandom();
-const fieldData = fieldForWallConnectionTest();
-const field = fieldData.field;
-const pageRadius = fieldData.pageRadius;
 
-//@ts-ignore
-window.field = field;
-
-const onCellClick = (p: FullCoordinates) => {
+const onCellClick = (fieldReducer: FieldReducer) => (p: FullCoordinates) => {
   //@ts-ignore
   const playerID = parseInt(document.querySelector('input[type="radio"][name="active-player"]:checked').value);
   // setCell([pageX,pageY,pageZ], [cellX,cellY,cellZ], field, {
@@ -82,11 +79,25 @@ const onCellClick = (p: FullCoordinates) => {
   });
 };
 
-const redraw = () => {
-  draw(field, viewport, pageRadius, cellOuterRadiusPx, onCellClick);
+let initialized = false;
+const redraw = (field, pageRadius, fieldReducer) => {
+  if (initialized) {
+    draw(field, viewport, pageRadius, cellOuterRadiusPx, onCellClick(fieldReducer));
+  }
 };
 
-const fieldReducer = new FieldReducer(field, redraw);
+const fieldData = fieldForWallConnectionTest(redraw);
+const field = fieldData.field;
+const pageRadius = fieldData.pageRadius;
+const components = fieldData.components;
+const fieldReducer = fieldData.reducer;
+
+// @ts-ignore
+window.field = field;
+// @ts-ignore
+window.components = components;
+
+// const fieldReducer = new FieldReducer(field, components, redraw);
 
 app.loader
   .add(['ant0.png', 'ant1.png'])
@@ -103,5 +114,6 @@ app.loader
     namedTextures[TEXTURE_WALL_1 + '_inactive'] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 1, false);
     new SpritePool(namedTextures, 1000);
 
-    redraw();
+    initialized = true;
+    redraw(field, pageRadius, fieldReducer);
   });
