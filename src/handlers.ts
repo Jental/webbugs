@@ -101,27 +101,9 @@ export class FieldReducer {
     case EventType.SetWall:
       return this.processSetWallEvent(event);
     case EventType.SetWallActive:
-      return {
-        events: [],
-        updates: [{
-          type: UpdateType.Field,
-          p: event.p,
-          value: {
-            isActive: true
-          }
-        }]
-      };
+      return { events: [], updates: [] };
     case EventType.SetWallInactive:
-      return {
-        events: [],
-        updates: [{
-          type: UpdateType.Field,
-          p: event.p,
-          value: {
-            isActive: false
-          }
-        }]
-      };
+      return { events: [], updates: [] };
     case EventType.AddWallToComponent:
       return { events: [], updates: [] };
     case EventType.RemoveWallFromComponent:
@@ -187,28 +169,41 @@ export class FieldReducer {
     }
 
     const neighbours = page.getNeibhours(event.p.cell);
+
+    console.log('events: set bug: neighbours:', neighbours);
     
-    const newEvents : Event[] =
-      neighbours
-      .filter(n => n.cell && n.cell.type === CellType.Wall && n.cell.playerID == event.value.playerID)
-      .map(n => ({
-        type: EventType.SetWallActive,
-        p: { page: event.p.page, cell: n.p},
+    let newEvents = [];
+    let newUpdates = [];
+
+    const ownNeighbourWallCompnents : Component[] =
+      _.chain(neighbours)
+      .filter(n => n.cell !== null && n.cell !== undefined && n.cell.type === CellType.Wall && n.cell.playerID === event.value.playerID)
+      .map(n => n.cell.component)
+      .uniq()
+      .value();
+
+    for (const comp of ownNeighbourWallCompnents) {
+      newUpdates.push({
+        type: UpdateType.Components,
+        id: comp.id,
         value: {
           isActive: true
         }
-      }));
+      });
+    }
+
+    newUpdates.push({
+      type: UpdateType.Field,
+      p: event.p,
+      value: {
+        type: CellType.Bug,
+        playerID: event.value.playerID
+      }
+    });
 
     return {
       events: newEvents,
-      updates: [{
-        type: UpdateType.Field,
-        p: event.p,
-        value: {
-          type: CellType.Bug,
-          playerID: event.value.playerID
-        }
-      }]
+      updates: newUpdates
     };
   }
 
@@ -230,20 +225,24 @@ export class FieldReducer {
     };
 
     const neighbours = page.getNeibhours(event.p.cell);
-    const neighbourWallComponents =
+    const neighbourWallComponents : Component[] =
       _.chain(neighbours)
        .filter(n => n.cell !== null && n.cell !== undefined && n.cell.type === CellType.Wall && n.cell.playerID === event.value.playerID)
        .map(n => n.cell.component)
        .filter(c => !!c)
        .uniq()
        .value();
+    const neighbourBugs =
+      _.filter(
+        neighbours,
+        n => n.cell !== null && n.cell !== undefined && n.cell.type === CellType.Bug && n.cell.playerID === event.value.playerID); 
 
-    console.log('events: processSetWallEvent: neighbours:', neighbours, neighbourWallComponents.length);
+    console.log('events: processSetWallEvent: neighbours:', neighbours, neighbourWallComponents.map(comp => comp.isActive));
     
     if (neighbourWallComponents.length === 0) {
       component = {
         id: _.uniqueId(),
-        isActive: true,
+        isActive: neighbourBugs.length > 0,
         walls: [ wall ]
       };
 
@@ -262,6 +261,7 @@ export class FieldReducer {
         type: UpdateType.Components,
         id: component.id,
         value: {
+          isActive: neighbourWallComponents[0].isActive || neighbourBugs.length > 0,
           walls: [...component.walls, wall]
         }
       });
@@ -270,7 +270,7 @@ export class FieldReducer {
       const allWalls = _.flatMap(neighbourWallComponents, n => n.walls);
       component = {
         id: _.uniqueId(),
-        isActive: true,
+        isActive: neighbourBugs.length > 0 || _.find(neighbourWallComponents, { isActive: true }) !== undefined,
         walls: [...allWalls, wall]
       };
 
@@ -385,7 +385,12 @@ export class FieldReducer {
         this.components[update.id] = update.value as Component;
       }
     }
-    else if (update.value.remove) {
+    if (update.value.isActive !== null && update.value.isActive !== undefined) {
+      if (update.id in this.components) {
+        this.components[update.id].isActive = update.value.isActive;
+      }
+    }
+    if (update.value.remove) {
       delete this.components[update.id];
     }
 
