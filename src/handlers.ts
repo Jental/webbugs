@@ -9,6 +9,7 @@ export enum EventType {
   Click = 'click',
   SetBug = 'set_bug',
   SetWall = 'set_wall',
+  UpdateWallActivity = 'update_wall_activity',
   SetWallActive = 'set_wall_active',
   SetWallInactive = 'set_wall_inactive',
   AddWallToComponent = 'add_wall_to_component',
@@ -100,6 +101,8 @@ export class FieldReducer {
       return this.processSetBugEvent(event);
     case EventType.SetWall:
       return this.processSetWallEvent(event);
+    case EventType.UpdateWallActivity:
+      return this.processUpdateWallActivityEvent(event);
     case EventType.SetWallActive:
       return { events: [], updates: [] };
     case EventType.SetWallInactive:
@@ -129,27 +132,50 @@ export class FieldReducer {
     const value = page.get(event.p.cell);
     
     if (value === null || value === undefined) {
-      return {
-        events: [{
-          type: EventType.SetBug,
-          p: event.p,
-          value: {
-            playerID : event.value.playerID
-          }
-        }],
-        updates: []
+      const neighbours = page.getNeibhours(event.p.cell);
+      const activeNeighbour =
+        neighbours.find(n =>
+          n.cell && n.cell.playerID === event.value.playerID && (
+            n.cell.type === CellType.Bug
+            || (n.cell.type === CellType.Wall && n.cell.component?.isActive)));
+      if (activeNeighbour !== null && activeNeighbour !== undefined) {
+        return {
+          events: [{
+            type: EventType.SetBug,
+            p: event.p,
+            value: {
+              playerID : event.value.playerID
+            }
+          }],
+          updates: []
+        }
+      }
+      else {
+        return { events: [], updates: [] };  
       }
     }
     else if (value.type == CellType.Bug && value.playerID != event.value.playerID) {
-      return {
-        events: [{
-          type: EventType.SetWall,
-          p: event.p,
-          value: {
-            playerID : event.value.playerID
-          }
-        }],
-        updates: []
+      const neighbours = page.getNeibhours(event.p.cell);
+      const activeNeighbour =
+        neighbours.find(n =>
+          n.cell && n.cell.playerID === event.value.playerID && (
+            n.cell.type === CellType.Bug
+            || (n.cell.type === CellType.Wall && n.cell.component?.isActive)));
+      console.log('active neighbour:', activeNeighbour);
+      if (activeNeighbour !== null && activeNeighbour !== undefined) {
+        return {
+          events: [{
+            type: EventType.SetWall,
+            p: event.p,
+            value: {
+              playerID : event.value.playerID
+            }
+          }],
+          updates: []
+        }
+      }
+      else {
+        return { events: [], updates: [] };  
       }
     }
     else {
@@ -235,7 +261,14 @@ export class FieldReducer {
     const neighbourBugs =
       _.filter(
         neighbours,
-        n => n.cell !== null && n.cell !== undefined && n.cell.type === CellType.Bug && n.cell.playerID === event.value.playerID); 
+        n => n.cell !== null && n.cell !== undefined && n.cell.type === CellType.Bug && n.cell.playerID === event.value.playerID);
+    const allNeighbourWallComponents : Component[] = 
+      _.chain(neighbours)
+      .filter(n => n.cell !== null && n.cell !== undefined && n.cell.type === CellType.Wall)
+      .map(n => n.cell.component)
+      .filter(c => !!c)
+      .uniq()
+      .value();  
 
     console.log('events: processSetWallEvent: neighbours:', neighbours, neighbourWallComponents.map(comp => comp.isActive));
     
@@ -299,6 +332,16 @@ export class FieldReducer {
       }
     }
 
+    for (const n of allNeighbourWallComponents) {
+      newEvents.push({
+        type: EventType.UpdateWallActivity,
+        p: null,
+        value: {
+          component: n
+        }
+      });
+    }
+
     wall.component = component;
     newUpdates.push({
       type: UpdateType.Field,
@@ -310,6 +353,39 @@ export class FieldReducer {
       events: newEvents,
       updates: newUpdates
     };
+  }
+
+  processUpdateWallActivityEvent(event: Event)  : { events: Event[], updates: Update[] } {
+    const component = event.value.component;
+    if (!component || component.walls.length === 0 || event.p === undefined) {
+      return { events: [], updates: [] }; 
+    }
+    const page = this.field.get({x: 0, y: 0, z: 0}); // TODO: fix coordinates
+    const playerID = component.walls[0].playerID;
+    const isActive0 =
+      _.chain(component.walls)
+      .flatMap(w => page.getNeibhours(w.p))
+      .uniq()
+      .filter(n => n.cell && n.cell.type === CellType.Bug && n.cell.playerID === playerID)
+      .value()
+      .length > 0;
+    const isActive1 = false;//this.field.get({x: 0, y: 0, z: 0}).isActive(component.walls[0].p, 1); // TODO: for all players, fix coordinates
+    const isActive = isActive0 || isActive1;
+    if (isActive !== component.isActive) {
+      return {
+        events: [],
+        updates: [{
+          type: UpdateType.Components,
+          id: component.id,
+          value: {
+            isActive: isActive
+          }
+        }]
+      };
+    }
+    else {
+      return { events: [], updates: [] };
+    }
   }
 
   processAddWallToComponentEvent(event: Event) : { events: Event[], updates: Update[] } {
