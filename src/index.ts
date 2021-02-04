@@ -7,12 +7,10 @@ import * as BugCellTexture from './textures/bug_cell';
 import * as WallCellTexture from './textures/wall_cell';
 import SpritePool from './sprite_pool';
 import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const';
-import { fieldRandom, fieldSingleRandom, fieldFullScreenRandom, fieldForWallConnectionTest } from './test/fields';
-import { FieldReducer, EventType } from './handlers';
+import { fieldForWallConnectionTest } from './test/fields';
+import { FieldReducer } from './handlers';
 import { FullCoordinates } from './models/coordinates';
-import { Component } from './models/component';
-import { Field } from './models/field';
-
+import { ClickEvent } from './events';
 
 // The application will create a renderer using WebGL, if possible,
 // with a fallback to a canvas render. It will also setup the ticker
@@ -80,13 +78,7 @@ const onCellClick = (fieldReducer: FieldReducer) => (p: FullCoordinates) => {
   //   type: 'bug',
   //   playerID : 0
   // });
-  fieldReducer.handle({
-    type: EventType.Click,
-    p: p,
-    value: {
-      playerID: playerID
-    }
-  });
+  fieldReducer.handle(new ClickEvent(p, playerID));
 };
 
 let initialized = false;

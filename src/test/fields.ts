@@ -1,8 +1,9 @@
 import { Field } from '../models/field';
-import { EventType, FieldReducer, setCell } from '../handlers';
+import { FieldReducer, setCell } from '../handlers';
 import { Coordinates } from '../models/coordinates';
 import { CellType } from '../models/cell';
-import { Component } from 'src/models/component';
+import { Component } from '../models/component';
+import { SetBugEvent, SetWallEvent } from '../events';
 
 const fillPageWithRandom = (field : Field, pageP: Coordinates) : void =>  {
   const page = field.get(pageP);
@@ -148,160 +149,32 @@ export const fieldForWallConnectionTest = (redrawFn: (field: Field, pageRadius: 
   const components : Record<string, Component> = {};
   const reducer = new FieldReducer(field, components, () => redrawFn(field, pageRadius, reducer));
 
-  reducer.handle({
-    type: EventType.SetBug,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 0, z: 0 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetBug,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 4, y: 1, z: -5 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetBug,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -4, z: 4 }},
-    value: {
-      playerID : 1
-    }
-  });
+  reducer.handle(new SetBugEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 0, z: 0 }}, 0));
+  reducer.handle(new SetBugEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 4, y: 1, z: -5 }}, 0));
+  reducer.handle(new SetBugEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -4, z: 4 }}, 1));
 
   // First wall component
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 1, z: -1 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 2, z: -2 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 3, z: -3 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 4, z: -4 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: 3, z: -4 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 2, y: 2, z: -4 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 3, y: 1, z: -4 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 3, y: 0, z: -3 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 2, y: 0, z: -2 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: 1, z: -2 }},
-    value: {
-      playerID : 0
-    }
-  });
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 1, z: -1 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 2, z: -2 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 3, z: -3 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 4, z: -4 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: 3, z: -4 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 2, y: 2, z: -4 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 3, y: 1, z: -4 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 3, y: 0, z: -3 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 2, y: 0, z: -2 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: 1, z: -2 }}, 0));
 
   // Second wall component
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -1, z: 0 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -2, z: 2 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -3, z: 3 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -3, z: 2 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -2, z: 1 }},
-    value: {
-      playerID : 0
-    }
-  });
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -1, z: 0 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -2, z: 2 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -3, z: 3 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -3, z: 2 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 1, y: -2, z: 1 }}, 0));
 
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: -1, y: 0, z: 1 }},
-    value: {
-      playerID : 1,
-      isActive: false
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: -2, y: 0, z: 2 }},
-    value: {
-      playerID : 0
-    }
-  });
-  reducer.handle({
-    type: EventType.SetWall,
-    p: { page: {x: 0, y: 0, z: 0 }, cell: { x: -3, y: 0, z: 3 }},
-    value: {
-      playerID : 0,
-      isActive: false
-    }
-  });
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: -1, y: 0, z: 1 }}, 1));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: -2, y: 0, z: 2 }}, 0));
+  reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: -3, y: 0, z: 3 }}, 0));
 
   return { field, pageRadius, components, reducer };
 };
