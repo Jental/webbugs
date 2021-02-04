@@ -5,6 +5,7 @@ import { Component } from './models/component';
 import { FullCoordinates } from './models/coordinates';
 import { Field } from './models/field';
 import { Page } from './models/page';
+import { AddComponentUdpate, ComponentsUpdate, FieldUpdate, RemoveComponentUpdate, Update, UpdateType } from './updates';
 
 interface ProcessResult {
   events: Event[],
@@ -12,26 +13,6 @@ interface ProcessResult {
 }
 
 const EmptyProcessResult : ProcessResult = { events: [], updates: [] };
-
-enum UpdateType {
-  Field = 0,
-  Components = 1,
-  CustomFn = 2
-}
-
-interface Update {
-  type: UpdateType,
-  p?: FullCoordinates,
-  id?: string | number,
-  value: {
-    type? : CellType,
-    playerID? : number,
-    isActive? : boolean,
-    walls?: Cell[],
-    component? : Component
-    remove?: boolean
-  }
-}
 
 export class FieldReducer {  
   private field: Field;
@@ -147,8 +128,8 @@ export class FieldReducer {
 
     const neighbours = page.getNeibhours(event.p.cell);
     
-    let newEvents = [];
-    let newUpdates = [];
+    let newEvents : Event[] = [];
+    let newUpdates : Update[] = [];
 
     const ownNeighbourWallCompnents : Component[] =
       _.chain(neighbours)
@@ -158,23 +139,15 @@ export class FieldReducer {
       .value();
 
     for (const comp of ownNeighbourWallCompnents) {
-      newUpdates.push({
-        type: UpdateType.Components,
-        id: comp.id,
-        value: {
-          isActive: true
-        }
-      });
+      newUpdates.push(new ComponentsUpdate(comp.id, { isActive: true }));
     }
 
-    newUpdates.push({
-      type: UpdateType.Field,
-      p: event.p,
-      value: {
-        type: CellType.Bug,
+    newUpdates.push(new FieldUpdate(
+      event.p,
+      {
+        cellType: CellType.Bug,
         playerID: event.playerID
-      }
-    });
+      }));
 
     return {
       events: newEvents,
@@ -226,23 +199,17 @@ export class FieldReducer {
         walls: [ wall ]
       };
 
-      newUpdates.push({
-        type: UpdateType.Components,
-        id: component.id,
-        value: component
-      });
+      newUpdates.push(new AddComponentUdpate(component));
     }
     else if (neighbourWallComponents.length === 1) {
       component = neighbourWallComponents[0];
 
-      newUpdates.push({
-        type: UpdateType.Components,
-        id: component.id,
-        value: {
+      newUpdates.push(new ComponentsUpdate(
+        component.id,
+        {
           isActive: neighbourWallComponents[0].isActive || neighbourBugs.length > 0,
           walls: [...component.walls, wall]
-        }
-      });
+        }));
     }
     else if (neighbourWallComponents.length > 1) {
       const allWalls = _.flatMap(neighbourWallComponents, n => n.walls);
@@ -252,28 +219,17 @@ export class FieldReducer {
         walls: [...allWalls, wall]
       };
 
-      newUpdates.push({
-        type: UpdateType.Components,
-        id: component.id,
-        value: component
-      });
+      newUpdates.push(new AddComponentUdpate(component));
 
       for (const w of allWalls) {
-        newUpdates.push({
-          type: UpdateType.Field,
-          p: { page: { x: 0, y: 0, z: 0 }, cell: w.p }, // TODO: real page coordinates
-          value: {
-            component: component
-          }
-        });
+        newUpdates.push(new FieldUpdate(
+          { page: { x: 0, y: 0, z: 0 }, cell: w.p }, // TODO: real page coordinates
+          { component: component }
+        ));
       }
 
       for (const n of neighbourWallComponents) {
-        newUpdates.push({
-          type: UpdateType.Components,
-          id: n.id,
-          value: { remove: true }
-        });
+        newUpdates.push(new RemoveComponentUpdate(n.id));
       }
     }
 
@@ -281,12 +237,11 @@ export class FieldReducer {
       newEvents.push(new UpdateComponentActivityEvent(n));
     }
 
-    wall.component = component;
-    newUpdates.push({
-      type: UpdateType.Field,
-      p: event.p,
-      value: wall
-    });
+    newUpdates.push(new FieldUpdate(event.p, {
+      cellType: CellType.Wall,
+      component: component,
+      playerID: event.playerID
+    }));
 
     return {
       events: newEvents,
@@ -301,25 +256,18 @@ export class FieldReducer {
     }
     const page = this.field.get({x: 0, y: 0, z: 0}); // TODO: fix coordinates
     const playerID = component.walls[0].playerID;
-    const isActive0 =
+    const isActive =
       _.chain(component.walls)
       .flatMap(w => page.getNeibhours(w.p))
       .uniq()
       .filter(n => n.cell && n.cell.type === CellType.Bug && n.cell.playerID === playerID)
       .value()
       .length > 0;
-    const isActive1 = false;//this.field.get({x: 0, y: 0, z: 0}).isActive(component.walls[0].p, 1); // TODO: for all players, fix coordinates
-    const isActive = isActive0 || isActive1;
+
     if (isActive !== component.isActive) {
       return {
         events: [],
-        updates: [{
-          type: UpdateType.Components,
-          id: component.id,
-          value: {
-            isActive: isActive
-          }
-        }]
+        updates: [ new ComponentsUpdate(component.id, { isActive: isActive }) ]
       };
     }
     else {
@@ -331,17 +279,22 @@ export class FieldReducer {
     for (const update of updates) {
       switch (update.type) {
         case UpdateType.Field:
-          this.applyFieldUpdate(update);
+          this.applyFieldUpdate(update as FieldUpdate);
           break;
         case UpdateType.Components:
-          this.applyComponentsUpdate(update);
+          this.applyComponentsUpdate(update as ComponentsUpdate);
+          break;
+        case UpdateType.AddComponent:
+          this.applyAddComponentUpdate(update as AddComponentUdpate);
+          break;
+        case UpdateType.RemoveComponent:
+          this.applyRemoveComponentUpdate(update as RemoveComponentUpdate);
           break;
       }
     }
   }
 
-  applyFieldUpdate(update: Update) : void {
-    console.log('events: field update:', update);
+  applyFieldUpdate(update: FieldUpdate) : void {
     const page = this.field.get(update.p.page);
     if (page) {
       const value = page.get(update.p.cell);
@@ -350,50 +303,48 @@ export class FieldReducer {
         {
           ...value,
           type:
-            update.value.type !== null && update.value.type !== undefined
-            ? update.value.type
+            update.cellType !== null && update.cellType !== undefined
+            ? update.cellType
             : (value ? value.type : null),
           playerID:
-            update.value.playerID !== null && update.value.playerID !== undefined
-            ? update.value.playerID
+            update.playerID !== null && update.playerID !== undefined
+            ? update.playerID
             : (value ? value.playerID : null),
           component:
-            update.value.component !== null && update.value.component !== undefined
-            ? update.value.component
-            : (value ? value.component : null),
-          isActive:
-            update.value.isActive !== null && update.value.isActive !== undefined
-            ? update.value.isActive
-            : (value ? value.isActive : true)
+            update.component !== null && update.component !== undefined
+            ? update.component
+            : (value ? value.component : null)
         });
     }
   }
 
-  applyComponentsUpdate(update: Update) : void {
-    console.log('events: components update:', update);
-
+  applyComponentsUpdate(update: ComponentsUpdate) : void {
     if (update.id === null || update.id === undefined) {
       return;
     }
 
-    if (update.value.walls) {
-      if (update.id in this.components) {
-        this.components[update.id].walls = update.value.walls;
-      }
-      else {
-        this.components[update.id] = update.value as Component;
-      }
-    }
-    if (update.value.isActive !== null && update.value.isActive !== undefined) {
-      if (update.id in this.components) {
-        this.components[update.id].isActive = update.value.isActive;
-      }
-    }
-    if (update.value.remove) {
-      delete this.components[update.id];
+    if (!(update.id in this.components)) {
+      return;
     }
 
-    console.log('events: updated components: ', this.components);
+    if (update.walls) {
+      this.components[update.id].walls = update.walls;
+    }
+    if (update.isActive !== null && update.isActive !== undefined) {
+      this.components[update.id].isActive = update.isActive;
+    }
+  }
+
+  applyAddComponentUpdate(update: AddComponentUdpate) : void {
+    if (update.component.id in this.components) {
+      return;
+    }
+
+    this.components[update.component.id] = update.component;
+  }
+
+  applyRemoveComponentUpdate(update: RemoveComponentUpdate) : void {
+    delete this.components[update.id];
   }
 }
 
