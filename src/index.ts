@@ -57,6 +57,16 @@ viewport
   .wheel()
   .decelerate();
 
+document.addEventListener("keydown", event => {
+  if (event.key == '0' || event.key == '1') {
+    const radio = document.querySelector(`input[type="radio"][name="active-player"][value="${event.key}"]`);
+    if (radio) {
+      // @ts-ignore
+      radio.checked = true;
+    }
+  } 
+});
+
 
 // const fieldData = fieldRandom();
 // const fieldData = fieldFullScreenRandom(worldOuterRadiusPx, cellOuterRadiusPx);
