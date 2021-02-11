@@ -2,11 +2,11 @@ import * as pixi from 'pixi.js';
 
 import SpritePool from './sprite_pool';
 import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const';
-import { Field } from './models/field';
-import { Coordinates, FullCoordinates } from './models/coordinates';
-import { Page } from './models/page';
+import { Field } from '../../webbugs-common/src/models/field';
+import { Coordinates, FullCoordinates } from '../../webbugs-common/src/models/coordinates';
+import { Page } from '../../webbugs-common/src/models/page';
 import { Viewport } from 'pixi-viewport';
-import { CellType } from './models/cell';
+import { CellType } from '../../webbugs-common/src/models/cell';
 
 const CELL_BORDER = 3;
 
