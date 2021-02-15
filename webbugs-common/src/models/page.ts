@@ -96,10 +96,10 @@ export class Page {
     return this.grid[this.key(p)];
   }
 
-  isActiveA(p: Coordinates, playerID: number) : boolean {
+  isActiveA(p: Coordinates, playerID: string) : boolean {
     return this.isActive(p, playerID);
   }
-  isActive(p: Coordinates, playerID: number) : boolean {
+  isActive(p: Coordinates, playerID: string) : boolean {
     const cellsToCheck = [p];
     const checkedCells = [];
     while (cellsToCheck.length > 0) {

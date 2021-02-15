@@ -52,10 +52,10 @@ const drawPage = (page: Page, components: Record<string, Component>, pageP: Coor
           if (cellValue && cellValue.type === CellType.Bug) {
             let spriteName = null;
             switch (cellValue.playerID) {
-            case 0:
+            case '0':
               spriteName = TEXTURE_BUG_0;
               break;
-            case 1:
+            case '1':
               spriteName = TEXTURE_BUG_1;
               break;
             }
@@ -67,10 +67,10 @@ const drawPage = (page: Page, components: Record<string, Component>, pageP: Coor
           else if (cellValue && cellValue.type === CellType.Wall) {
             let spriteName = null;
             switch (cellValue.playerID) {
-            case 0:
+            case '0':
               spriteName = components[cellValue.component_id]?.isActive ? TEXTURE_WALL_0 : (TEXTURE_WALL_0 + '_inactive');
               break;
-            case 1:
+            case '1':
               spriteName = components[cellValue.component_id]?.isActive ? TEXTURE_WALL_1 : (TEXTURE_WALL_1 + '_inactive');
               break;
             }

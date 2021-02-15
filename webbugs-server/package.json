@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "build": "node ./node_modules/typescript/bin/tsc",
-    "start": "node ./node_modules/typescript/bin/tsc & node ./dist/webbugs-server/src/index.js",
+    "start": "node ./dist/webbugs-server/src/index.js",
     "dev": "ts-node-dev --respawn --transpile ./src/server.ts"
   },
   "author": "",

@@ -13,11 +13,11 @@ export class FieldUpdate {
   type: UpdateType = UpdateType.Field;
 
   p: FullCoordinates;
-  playerID? : number;
+  playerID? : string;
   cellType?: CellType;
   component? : Component;
 
-  constructor (p: FullCoordinates, update: { playerID?: number, cellType?: CellType, component?: Component }) {
+  constructor (p: FullCoordinates, update: { playerID?: string, cellType?: CellType, component?: Component }) {
     this.p = p;
     this.playerID = update.playerID;
     this.cellType = update.cellType;

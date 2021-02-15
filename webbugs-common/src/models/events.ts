@@ -11,9 +11,9 @@ export enum EventType {
 export class ClickEvent {
   type: EventType = EventType.Click;
   p: FullCoordinates;
-  playerID: number;
+  playerID: string;
 
-  constructor(p: FullCoordinates, playerID: number) {
+  constructor(p: FullCoordinates, playerID: string) {
     this.p = p;
     this.playerID = playerID;
   }
@@ -22,9 +22,9 @@ export class ClickEvent {
 export class SetBugEvent {
   type: EventType = EventType.SetBug;
   p: FullCoordinates;
-  playerID: number;
+  playerID: string;
 
-  constructor(p: FullCoordinates, playerID: number) {
+  constructor(p: FullCoordinates, playerID: string) {
     this.p = p;
     this.playerID = playerID;
   }
@@ -33,9 +33,9 @@ export class SetBugEvent {
 export class SetWallEvent {
   type: EventType = EventType.SetWall;
   p: FullCoordinates;
-  playerID: number;
+  playerID: string;
 
-  constructor(p: FullCoordinates, playerID: number) {
+  constructor(p: FullCoordinates, playerID: string) {
     this.p = p;
     this.playerID = playerID;
   }

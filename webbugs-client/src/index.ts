@@ -1,15 +1,16 @@
 import { Observable, fromEvent, from, combineLatest } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
 import { io } from 'socket.io-client';
+import { v4 as uuid } from 'uuid';
 
 import { Field } from '../../webbugs-common/src/models/field';
 import { Component } from '../../webbugs-common/src/models/component';
 import { MessageType } from '../../webbugs-common/src/contract/message_type';
 import { DataContract } from '../../webbugs-common/src/contract/data_contract';
 import { ClickContract } from '../../webbugs-common/src/contract/click_contract';
+import { FullCoordinates } from '../../webbugs-common/src/models/coordinates';
 
 import { createPixiApp } from './pixi_app';
-import { FullCoordinates } from '../../webbugs-common/src/models/coordinates';
 
 // const maxScreenSize = 3000.0;
 const maxScreenSize = 100.0;
@@ -26,6 +27,8 @@ const store : Store = {
 
 const socket = io('http://localhost:5000');
 
+let playerID = uuid();
+
 document.addEventListener("keydown", event => {
   if (event.key == '0' || event.key == '1') {
     const radio = document.querySelector(`input[type="radio"][name="active-player"][value="${event.key}"]`);
@@ -33,6 +36,7 @@ document.addEventListener("keydown", event => {
       // @ts-ignore
       radio.checked = true;
     }
+    playerID = event.key;
   } 
 });
 document.getElementById('reset-btn').addEventListener("click", event => {
@@ -41,7 +45,10 @@ document.getElementById('reset-btn').addEventListener("click", event => {
 
 const onCellClick = (p: FullCoordinates) => {
   const playerRadioButton : HTMLInputElement = document.querySelector('input[type="radio"][name="active-player"]:checked');
-  const playerID = parseInt(playerRadioButton.value);
+  if (playerRadioButton) {
+    playerID = playerRadioButton.value;
+  }
+
   const data: ClickContract = {
     p,
     playerID

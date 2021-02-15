@@ -9,7 +9,7 @@ export enum CellType {
 
 export interface Cell {
   type: CellType,
-  playerID: number,
+  playerID: string,
   component_id?: string,
   page: Page,
   p: Coordinates
