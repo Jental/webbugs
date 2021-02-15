@@ -26,30 +26,35 @@ let reducer: FieldReducer = null;
 let socket : socketio.Server = null;
 
 const onFieldUpdate = () => {
-  const data: DataContract = {
-    field: field,
-    components: components
-  }
-
-  // for (const client of connectedClients) {
-  //   client.emit(MessageType.Data, data);
-  // }
   if (socket && connectedClients.length > 0) {
+    const data: DataContract = {
+      field: field,
+      components: components
+    }
+
     socket.sockets.emit(MessageType.Data, data);
   }
 }
 
 const onClick = (data: ClickContract) => {
-  console.log('click', data);
   if (reducer) {
     reducer.handle(new ClickEvent(data.p, data.playerID));
   }
 }
 
-const fieldData = fieldForWallConnectionTest(onFieldUpdate);
-field = fieldData.field;
-components = fieldData.components;
-reducer = fieldData.reducer;
+const reCreateField = () => {
+  const fieldData = fieldForWallConnectionTest(onFieldUpdate);
+  field = fieldData.field;
+  components = fieldData.components;
+  reducer = fieldData.reducer;
+}
+
+const onReset = () => {
+  console.log('Reset');
+  reCreateField();
+}
+
+reCreateField();
 
 let setCORS = (res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -78,6 +83,7 @@ socket.on('connection', (client : socketio.Socket) => {
   });
 
   client.on(MessageType.Click, onClick);
+  client.on(MessageType.Reset, onReset);
 
   const data: DataContract = {
     field: field,

@@ -1,4 +1,5 @@
 export enum MessageType {
   Data = 'data',
-  Click = 'click'
+  Click = 'click',
+  Reset = 'reset'
 };

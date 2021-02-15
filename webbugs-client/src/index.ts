@@ -35,6 +35,9 @@ document.addEventListener("keydown", event => {
     }
   } 
 });
+document.getElementById('reset-btn').addEventListener("click", event => {
+  socket.emit(MessageType.Reset);
+});
 
 const onCellClick = (p: FullCoordinates) => {
   const playerRadioButton : HTMLInputElement = document.querySelector('input[type="radio"][name="active-player"]:checked');
