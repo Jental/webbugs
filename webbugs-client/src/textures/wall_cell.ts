@@ -1,7 +1,7 @@
 import * as pixi from 'pixi.js';
 import { COLORS } from '../const';
 
-const create = (renderer: pixi.Renderer, outerRadius: number, playerID: number, isActive: boolean) => {
+const create = (renderer: pixi.Renderer, outerRadius: number, playerID: string, isActive: boolean) => {
   const innerRadiusRaw = outerRadius * Math.sqrt(3) / 2.0;
   const innerRadius = Math.ceil(innerRadiusRaw);
 
@@ -15,7 +15,7 @@ const create = (renderer: pixi.Renderer, outerRadius: number, playerID: number, 
 
   const graphics = new pixi.Graphics();
 
-  const color = parseInt(COLORS[playerID]);
+  const color = COLORS[playerID];
   graphics.lineStyle(1, color, 1);
   if (isActive) {
     graphics.beginFill(color);

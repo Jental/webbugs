@@ -1,7 +1,7 @@
 import * as pixi from 'pixi.js';
 
 import SpritePool from './sprite_pool';
-import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const';
+import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL, TEXTURE_WALL_INACTIVE } from './const';
 import { Field } from '../../webbugs-common/src/models/field';
 import { Coordinates, FullCoordinates } from '../../webbugs-common/src/models/coordinates';
 import { Page } from '../../webbugs-common/src/models/page';
@@ -50,30 +50,17 @@ const drawPage = (page: Page, components: Record<string, Component>, pageP: Coor
 
           let cell = null;
           if (cellValue && cellValue.type === CellType.Bug) {
-            let spriteName = null;
-            switch (cellValue.playerID) {
-            case '0':
-              spriteName = TEXTURE_BUG_0;
-              break;
-            case '1':
-              spriteName = TEXTURE_BUG_1;
-              break;
-            }
+            const spriteName = TEXTURE_BUG(cellValue.playerID);
             if (spriteName) {
               cell = SpritePool.getInstance().get(spriteName);
               console.log('bug cell', cell);
             }
           }
           else if (cellValue && cellValue.type === CellType.Wall) {
-            let spriteName = null;
-            switch (cellValue.playerID) {
-            case '0':
-              spriteName = components[cellValue.component_id]?.isActive ? TEXTURE_WALL_0 : (TEXTURE_WALL_0 + '_inactive');
-              break;
-            case '1':
-              spriteName = components[cellValue.component_id]?.isActive ? TEXTURE_WALL_1 : (TEXTURE_WALL_1 + '_inactive');
-              break;
-            }
+            const spriteName =
+              components[cellValue.component_id]?.isActive
+              ? TEXTURE_WALL(cellValue.playerID)
+              : TEXTURE_WALL_INACTIVE(cellValue.playerID);
             if (spriteName) {
               cell = SpritePool.getInstance().get(spriteName);
             }

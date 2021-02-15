@@ -4,12 +4,13 @@ import { Viewport } from 'pixi-viewport';
 import { FullCoordinates } from '../../webbugs-common/src/models/coordinates';
 import { draw } from './draw_field';
 import { Field } from '../../webbugs-common/src/models/field';
-import { TEXTURE_EMPTY, TEXTURE_BUG_0, TEXTURE_WALL_0, TEXTURE_BUG_1, TEXTURE_WALL_1 } from './const';
+import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL, TEXTURE_WALL_INACTIVE } from './const';
 import * as EmptyCellTexture from './textures/empty_cell';
 import * as BugCellTexture from './textures/bug_cell';
 import * as WallCellTexture from './textures/wall_cell';
 import SpritePool from './sprite_pool';
 import { Component } from '../../webbugs-common/src/models/component';
+import { Observable } from 'rxjs';
 
 export interface PixiInitResult {
   drawFn: (field: Field, components: Record<string, Component>) => void
@@ -18,6 +19,7 @@ export interface PixiInitResult {
 export const createPixiApp = (
   maxScreenSize: number,
   cellOuterRadiusPx: number,
+  playerIDs$: Observable<string[]>,
   onCellClick: (p: FullCoordinates) => void
 ) : Promise<PixiInitResult> => new Promise((resolve) => {
   const worldOuterRadiusPx = maxScreenSize / 2.0 * (1.0 + 1.0 / Math.sqrt(3));
@@ -62,24 +64,32 @@ export const createPixiApp = (
     .decelerate();
 
   const drawFn = (field: Field, components: Record<string, Component>) => {
-    console.log('draw');
+    console.log('pixi: draw');
     draw(field, components, viewport, pageRadius, cellOuterRadiusPx, onCellClick);
   }
 
   app.loader
-  .add(['ant0.png', 'ant1.png'])
+  .add(['ant.png'])
   .load(() => {
-    console.log('textures loaded');
+    console.log('pixi: textures loaded');
 
     const namedTextures = {};
     namedTextures[TEXTURE_EMPTY] = EmptyCellTexture.create(app.renderer, cellOuterRadiusPx);
-    namedTextures[TEXTURE_BUG_0] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, 0);
-    namedTextures[TEXTURE_WALL_0] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 0, true);
-    namedTextures[TEXTURE_WALL_0 + '_inactive'] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 0, false);
-    namedTextures[TEXTURE_BUG_1] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, 1);
-    namedTextures[TEXTURE_WALL_1] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 1, true);
-    namedTextures[TEXTURE_WALL_1 + '_inactive'] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 1, false);
-    new SpritePool(namedTextures, 1000);
+    const spritePool = new SpritePool(namedTextures, 1000);
+
+    playerIDs$.subscribe((playerIDs) => {
+      console.log('pixi: new player ids');
+
+      for (const playerID of playerIDs) {
+        if (!spritePool.has(`bug_${playerID}`)) {
+          const namedPlayerTextures = {};
+          namedPlayerTextures[TEXTURE_BUG(playerID)] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, playerID);
+          namedPlayerTextures[TEXTURE_WALL(playerID)] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, playerID, true);
+          namedPlayerTextures[TEXTURE_WALL_INACTIVE(playerID)] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, playerID, false);
+          spritePool.add(namedPlayerTextures);
+        }
+      }
+    });
 
     resolve({
       drawFn : drawFn

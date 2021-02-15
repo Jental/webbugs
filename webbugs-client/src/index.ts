@@ -1,16 +1,17 @@
 import { Observable, fromEvent, from, combineLatest } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
 import { io } from 'socket.io-client';
-import { v4 as uuid } from 'uuid';
 
 import { Field } from '../../webbugs-common/src/models/field';
 import { Component } from '../../webbugs-common/src/models/component';
 import { MessageType } from '../../webbugs-common/src/contract/message_type';
 import { DataContract } from '../../webbugs-common/src/contract/data_contract';
+import { MetadataContract } from '../../webbugs-common/src/contract/metadata_contract';
 import { ClickContract } from '../../webbugs-common/src/contract/click_contract';
 import { FullCoordinates } from '../../webbugs-common/src/models/coordinates';
 
 import { createPixiApp } from './pixi_app';
+import { COLORS } from './const';
 
 // const maxScreenSize = 3000.0;
 const maxScreenSize = 100.0;
@@ -27,7 +28,7 @@ const store : Store = {
 
 const socket = io('http://localhost:5000');
 
-let playerID = uuid();
+let playerID = null;
 
 document.addEventListener("keydown", event => {
   if (event.key == '0' || event.key == '1') {
@@ -56,7 +57,14 @@ const onCellClick = (p: FullCoordinates) => {
   socket.emit(MessageType.Click, data);
 };
 
-const pixiInit$ = from(createPixiApp(maxScreenSize, cellOuterRadiusPx, onCellClick));
+const metadataEvent$ : Observable<MetadataContract> = fromEvent<MetadataContract>(socket, MessageType.Metadata);
+
+const pixiInit$ = from(createPixiApp(
+  maxScreenSize,
+  cellOuterRadiusPx,
+  metadataEvent$.pipe(map(data => data.playerIDs)),
+  onCellClick
+));
 
 const dataEvent$ : Observable<DataContract> = fromEvent<DataContract>(socket, MessageType.Data);
 store.field$ = dataEvent$.pipe(
@@ -68,6 +76,13 @@ store.components$ = dataEvent$.pipe(
   map(data => data.components)
 );
 
+metadataEvent$.subscribe((data) => {
+  console.log('metadata update', data);
+  playerID = data.playerID;
+  if (!(playerID in COLORS)) {
+    COLORS[playerID] = Math.floor(Math.random() * 2**24);
+  }
+});
 dataEvent$.subscribe(() => { console.log('update from server'); });
 store.field$.subscribe(() => { console.log('field update'); });
 store.components$.subscribe(() => { console.log('components update'); });

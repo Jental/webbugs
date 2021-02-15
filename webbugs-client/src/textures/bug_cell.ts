@@ -1,14 +1,16 @@
 import * as pixi from 'pixi.js';
+import { ColorReplaceFilter } from 'pixi-filters';
+import { COLORS } from '../const';
 
-const create = (renderer: pixi.Renderer, outerRadius: number, playerID: number) => {
+const create = (renderer: pixi.Renderer, outerRadius: number, playerID: string) => {
   const innerRadiusRaw = outerRadius * Math.sqrt(3) / 2.0;
   const innerRadius = Math.ceil(innerRadiusRaw);
 
   const texture = pixi.RenderTexture.create({ width: innerRadius * 2 + 1, height: outerRadius * 2 + 1 });
   // const textureSize = Math.pow(2, Math.floor(Math.log(outerRadius * 2.0) / Math.log(2)) + 1); // Textures are recommended to be 2^-sized and square
   // const texture = pixi.RenderTexture.create(textureSize, textureSize);
-  const textureName = `ant${playerID}.png`;
-  console.log('ant texture:', textureName);
+  // const textureName = `ant${playerID}.png`;
+  const textureName = 'ant.png';
   const antTexture = pixi.utils.TextureCache[textureName];
 
   const centerH = innerRadius + 1;
@@ -35,6 +37,9 @@ const create = (renderer: pixi.Renderer, outerRadius: number, playerID: number) 
   const size = Math.pow(2, Math.floor(Math.log(innerRadiusRaw * 2.0) / Math.log(2)));
   ant.width = size;
   ant.height = size;
+
+  const filter = new ColorReplaceFilter(0x000000, COLORS[playerID], 0.1);
+  ant.filters = [filter];
 
   let ctr = new pixi.Container();
   ctr.addChild(graphics);

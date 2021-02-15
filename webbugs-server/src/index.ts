@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as http from 'http';
 import * as socketio from 'socket.io';
 const io = require('socket.io');
+import { v4 as uuid } from 'uuid';
 
 import { MessageType } from '../../webbugs-common/src/contract/message_type';
 import { DataContract } from '../../webbugs-common/src/contract/data_contract'; 
@@ -14,12 +15,14 @@ import { Component } from '../../webbugs-common/src/models/component';
 import { ClickContract } from '../../webbugs-common/src/contract/click_contract';
 import { FieldReducer } from './handlers';
 import { ClickEvent } from '../../webbugs-common/src/models/events';
+import { MetadataContract } from '../../webbugs-common/src/contract/metadata_contract';
 
 const PORT = process.env.PORT || 5000;
 const WS_PORT = process.env.WS_PORT || 5001;
 const STATIC_PATH = path.join(__dirname, '../../../../webbugs-client/dist/');
 
 let connectedClients : any[] = [];
+let playerIDs : string[] = ['0', '1'];
 let field : Field = null;
 let components: Record<string, Component> = {}
 let reducer: FieldReducer = null;
@@ -34,6 +37,22 @@ const onFieldUpdate = () => {
 
     socket.sockets.emit(MessageType.Data, data);
   }
+}
+
+const onConnect = (client: socketio.Socket) => {
+  const newPlayerID = uuid();
+  playerIDs.push(newPlayerID);
+  const metadata : MetadataContract = {
+    playerID: newPlayerID,
+    playerIDs: playerIDs
+  };
+  client.emit(MessageType.Metadata, metadata);
+
+  const data: DataContract = {
+    field: field,
+    components: components
+  }
+  client.emit(MessageType.Data, data);
 }
 
 const onClick = (data: ClickContract) => {
@@ -85,12 +104,7 @@ socket.on('connection', (client : socketio.Socket) => {
   client.on(MessageType.Click, onClick);
   client.on(MessageType.Reset, onReset);
 
-  const data: DataContract = {
-    field: field,
-    components: components
-  }
-
-  client.emit(MessageType.Data, data);
+  onConnect(client);
 });
 // socket.listen(WS_PORT);
 console.log('path for static: ', STATIC_PATH);
