@@ -1,5 +1,5 @@
 import { Observable, fromEvent, from, combineLatest } from 'rxjs';
-import { map, filter, withLatestFrom, mergeMap } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 import { io } from 'socket.io-client';
 
 import { Field } from '../../webbugs-common/src/models/field';
@@ -10,7 +10,6 @@ import { ClickContract } from '../../webbugs-common/src/contract/click_contract'
 
 import { createPixiApp } from './pixi_app';
 import { FullCoordinates } from '../../webbugs-common/src/models/coordinates';
-
 
 // const maxScreenSize = 3000.0;
 const maxScreenSize = 100.0;
@@ -40,7 +39,6 @@ document.addEventListener("keydown", event => {
 const onCellClick = (p: FullCoordinates) => {
   const playerRadioButton : HTMLInputElement = document.querySelector('input[type="radio"][name="active-player"]:checked');
   const playerID = parseInt(playerRadioButton.value);
-  console.log('click', p, playerID);
   const data: ClickContract = {
     p,
     playerID
