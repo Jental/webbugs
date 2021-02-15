@@ -18,18 +18,12 @@ const cellOuterRadiusPx = 10.0;
 
 interface Store {
   field$: Observable<Field>;
-  field: Field,
   components$: Observable<Record<string, Component>>;
-  components: Record<string, Component>
 }
 const store : Store = {
   field$: null,
-  field: null,
   components$: null,
-  components: null
 };
-// @ts-ignore
-window.store = store;
 
 const socket = io('http://localhost:5000');
 
@@ -54,16 +48,6 @@ const onCellClick = (p: FullCoordinates) => {
   socket.emit(MessageType.Click, data);
 };
 
-// const redraw = (field: Field, components: Record<string, Component>) => {
-//   console.log('redraw');
-//   if (initialized && drawFn) {
-//     drawFn(field, components);
-//   }
-//   else {
-//     console.log('redraw: not yet initialized');
-//   }
-// };
-
 const pixiInit$ = from(createPixiApp(maxScreenSize, cellOuterRadiusPx, onCellClick));
 
 const dataEvent$ : Observable<DataContract> = fromEvent<DataContract>(socket, MessageType.Data);
@@ -83,5 +67,8 @@ pixiInit$.subscribe(() => { console.log('pixi initialized'); });
 
 combineLatest([pixiInit$, store.field$, store.components$])
 .subscribe(([pixiInitData, field, components]) => {
+  // @ts-ignore
+  window.field = field; window.components = components;
+
   pixiInitData.drawFn(field, components);
 });
