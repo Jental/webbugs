@@ -5,9 +5,11 @@
 		<script type="text/javascript" src="lib.bundle.js"></script>
 	</head>
 	<body style="margin: 0;">
-		<label style="color: #000000;"><input type="radio" name="active-player" value="0" />First player</label>
-		<label style="color: #fb6565;"><input type="radio" name="active-player" value="1" />Second player</label>
-		<input type="button" id="reset-btn" value="New" style="position: absolute; left: 5px; top: 25px;" />
+		<ul id="players" style="position: absolute; top: 5px;">
+			<li><label style="color: #358aeb;"><input type="radio" name="active-player" value="0" />First player</label></li>
+			<li><label style="color: #fb6565;"><input type="radio" name="active-player" value="1" />Second player</label></li>
+		</ul>
+		<input type="button" id="reset-btn" value="New" style="position: absolute; right: 5px; top: 5px;" />
 		<script type="text/javascript" src="bundle.js"></script>
 	</body>
 </html>

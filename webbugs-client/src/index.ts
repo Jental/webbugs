@@ -79,6 +79,28 @@ store.components$ = dataEvent$.pipe(
 metadataEvent$.subscribe((data) => {
   console.log('metadata update', data);
   playerID = data.playerID;
+
+  setTimeout(() => {
+    const playersEl = document.getElementById('players');
+    playersEl.innerHTML = '';
+    for (const pid of data.playerIDs){
+      const playerColor = COLORS[pid];
+      console.log('player:', pid, playerColor);
+      if (playerColor !== null && playerColor !== undefined) {
+        const hexColor = '#' + playerColor.toString(16);
+        if (pid === '0' || pid === '1' || pid === data.playerID) {
+          const el = document.createElement('li');
+          el.innerHTML = `<label style="color: ${hexColor};"><input type="radio" name="active-player" value="${pid}" ${(pid === playerID) ? 'checked' : ''}/>${pid}</label>`;
+          playersEl.appendChild(el);
+        }
+        // else {
+        //   const el = document.createElement('li');
+        //   el.innerHTML = `<span style="color: ${hexColor};">${pid}</span>`;
+        //   playersEl.appendChild(el);
+        // }
+      }
+    }
+  }, 500);
 });
 dataEvent$.subscribe(() => { console.log('update from server'); });
 store.field$.subscribe(() => { console.log('field update'); });

@@ -19,11 +19,10 @@ import { MetadataContract } from '../../webbugs-common/src/contract/metadata_con
 import { Coordinates } from '../../webbugs-common/src/models/coordinates';
 
 const PORT = process.env.PORT || 5000;
-const WS_PORT = process.env.WS_PORT || 5001;
 const STATIC_PATH = path.join(__dirname, '../../../../webbugs-client/dist/');
 
 let connectedClients : any[] = [];
-let playerIDs : string[] = ['0', '1'];
+let playerIDs : string[] = [];
 let field : Field = null;
 let components: Record<string, Component> = {}
 let reducer: FieldReducer = null;
@@ -55,7 +54,7 @@ const onConnect = (client: socketio.Socket) => {
   }
   client.emit(MessageType.Data, data);
 
-  const pageP : Coordinates = {x:0, y:0, z: 0};
+  const pageP : Coordinates = {x:0, y:0, z:0};
   field.get(pageP)
   .getRandomEmptyCellCoordinates()
   .then((p: Coordinates) => {
@@ -74,6 +73,7 @@ const reCreateField = () => {
   field = fieldData.field;
   components = fieldData.components;
   reducer = fieldData.reducer;
+  playerIDs = ['0', '1'];
 }
 
 const onReset = () => {
