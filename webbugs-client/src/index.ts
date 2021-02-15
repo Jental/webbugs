@@ -1,5 +1,5 @@
-import { Observable, fromEvent } from 'rxjs';
-import { map, filter, mergeMap, withLatestFrom } from 'rxjs/operators';
+import { Observable, fromEvent, from, combineLatest } from 'rxjs';
+import { map, filter, withLatestFrom, mergeMap } from 'rxjs/operators';
 import { io } from 'socket.io-client';
 
 import { Field } from '../../webbugs-common/src/models/field';
@@ -18,12 +18,18 @@ const cellOuterRadiusPx = 10.0;
 
 interface Store {
   field$: Observable<Field>;
+  field: Field,
   components$: Observable<Record<string, Component>>;
+  components: Record<string, Component>
 }
 const store : Store = {
   field$: null,
-  components$: null
+  field: null,
+  components$: null,
+  components: null
 };
+// @ts-ignore
+window.store = store;
 
 const socket = io('http://localhost:5000');
 
@@ -48,17 +54,17 @@ const onCellClick = (p: FullCoordinates) => {
   socket.emit(MessageType.Click, data);
 };
 
-const redraw = (field: Field, components: Record<string, Component>) => {
-  console.log('redraw');
-  if (initialized && drawFn) {
-    drawFn(field, components);
-  }
-};
+// const redraw = (field: Field, components: Record<string, Component>) => {
+//   console.log('redraw');
+//   if (initialized && drawFn) {
+//     drawFn(field, components);
+//   }
+//   else {
+//     console.log('redraw: not yet initialized');
+//   }
+// };
 
-let initialized = false;
-const onPixiInit = () => { initialized = true; }
-
-let drawFn = createPixiApp(maxScreenSize, cellOuterRadiusPx, onPixiInit, onCellClick);
+const pixiInit$ = from(createPixiApp(maxScreenSize, cellOuterRadiusPx, onCellClick));
 
 const dataEvent$ : Observable<DataContract> = fromEvent<DataContract>(socket, MessageType.Data);
 store.field$ = dataEvent$.pipe(
@@ -70,14 +76,12 @@ store.components$ = dataEvent$.pipe(
   map(data => data.components)
 );
 
-store.field$.subscribe(() => { console.log('field update'); })
+dataEvent$.subscribe(() => { console.log('update from server'); });
+store.field$.subscribe(() => { console.log('field update'); });
 store.components$.subscribe(() => { console.log('components update'); });
+pixiInit$.subscribe(() => { console.log('pixi initialized'); });
 
-store.field$.pipe(withLatestFrom(store.components$))
-.subscribe(data => {
-  // @ts-ignore
-  window.field = data[0];
-  // @ts-ignore
-  window.components = data[1];
-  redraw(data[0], data[1]);
+combineLatest([pixiInit$, store.field$, store.components$])
+.subscribe(([pixiInitData, field, components]) => {
+  pixiInitData.drawFn(field, components);
 });

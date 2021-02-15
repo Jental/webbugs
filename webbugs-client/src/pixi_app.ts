@@ -11,12 +11,15 @@ import * as WallCellTexture from './textures/wall_cell';
 import SpritePool from './sprite_pool';
 import { Component } from '../../webbugs-common/src/models/component';
 
+export interface PixiInitResult {
+  drawFn: (field: Field, components: Record<string, Component>) => void
+}
+
 export const createPixiApp = (
   maxScreenSize: number,
   cellOuterRadiusPx: number,
-  onInit: () => void,
   onCellClick: (p: FullCoordinates) => void
-) => {
+) : Promise<PixiInitResult> => new Promise((resolve) => {
   const worldOuterRadiusPx = maxScreenSize / 2.0 * (1.0 + 1.0 / Math.sqrt(3));
   const pageRadius = Math.floor(maxScreenSize / cellOuterRadiusPx);
 
@@ -59,6 +62,7 @@ export const createPixiApp = (
     .decelerate();
 
   const drawFn = (field: Field, components: Record<string, Component>) => {
+    console.log('draw');
     draw(field, components, viewport, pageRadius, cellOuterRadiusPx, onCellClick);
   }
 
@@ -77,8 +81,8 @@ export const createPixiApp = (
     namedTextures[TEXTURE_WALL_1 + '_inactive'] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, 1, false);
     new SpritePool(namedTextures, 1000);
 
-    onInit();
+    resolve({
+      drawFn : drawFn
+    });
   });
-
-  return drawFn;
-}
+});
