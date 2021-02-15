@@ -11,13 +11,18 @@ import { DataContract } from '../../webbugs-common/src/contract/data_contract';
 import { fieldForWallConnectionTest } from './test/fields';
 import { Field } from '../../webbugs-common/src/models/field';
 import { Component } from '../../webbugs-common/src/models/component';
+import { ClickContract } from '../../webbugs-common/src/contract/click_contract';
+import { FieldReducer } from './handlers';
+import { ClickEvent } from '../../webbugs-common/src/models/events';
 
 const PORT = process.env.PORT || 5000;
 const WS_PORT = process.env.WS_PORT || 5001;
+const STATIC_PATH = path.join(__dirname, '../../../../webbugs-client/dist/');
 
 let connectedClients : any[] = [];
 let field : Field = null;
 let components: Record<string, Component> = {}
+let reducer: FieldReducer = null;
 let socket : socketio.Server = null;
 
 const onFieldUpdate = () => {
@@ -34,9 +39,17 @@ const onFieldUpdate = () => {
   }
 }
 
+const onClick = (data: ClickContract) => {
+  console.log('click', data);
+  if (reducer) {
+    reducer.handle(new ClickEvent(data.p, data.playerID));
+  }
+}
+
 const fieldData = fieldForWallConnectionTest(onFieldUpdate);
 field = fieldData.field;
 components = fieldData.components;
+reducer = fieldData.reducer;
 
 let setCORS = (res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -48,13 +61,12 @@ let setCORS = (res) => {
 const expressI : Express = express();
 const httpServer : http.Server =
   expressI
-  .use(express.static(path.join(__dirname, '../webbugs-client/dist/')))
+  .use(express.static(STATIC_PATH))
   .use((req, res, next) => {
     setCORS(res);
     next();
   })
   .listen(PORT, () => console.log(`Listening on ${ PORT }`));
-
 
 socket = io(httpServer);
 socket.on('connection', (client : socketio.Socket) => {
@@ -63,7 +75,9 @@ socket.on('connection', (client : socketio.Socket) => {
 
   client.on('disconnect', () => {
     connectedClients.splice(connectedClients.indexOf(client), 1);
- });
+  });
+
+  client.on(MessageType.Click, onClick);
 
   const data: DataContract = {
     field: field,
@@ -73,5 +87,4 @@ socket.on('connection', (client : socketio.Socket) => {
   client.emit(MessageType.Data, data);
 });
 // socket.listen(WS_PORT);
-console.log('Listening for messages on port ', WS_PORT);
-
+console.log('path for static: ', STATIC_PATH);

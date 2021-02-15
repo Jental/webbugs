@@ -89,7 +89,7 @@ export class FieldReducer {
         neighbours.find(n =>
           n.cell && n.cell.playerID === event.playerID && (
             n.cell.type === CellType.Bug
-            || (n.cell.type === CellType.Wall && n.cell.component?.isActive)));
+            || (n.cell.type === CellType.Wall && this.components[n.cell.component_id]?.isActive)));
       if (activeNeighbour !== null && activeNeighbour !== undefined) {
         return {
           events: [ new SetBugEvent(event.p, event.playerID) ],
@@ -106,7 +106,7 @@ export class FieldReducer {
         neighbours.find(n =>
           n.cell && n.cell.playerID === event.playerID && (
             n.cell.type === CellType.Bug
-            || (n.cell.type === CellType.Wall && n.cell.component?.isActive)));
+            || (n.cell.type === CellType.Wall && this.components[n.cell.component_id]?.isActive)));
       if (activeNeighbour !== null && activeNeighbour !== undefined) {
         return {
           events: [ new SetWallEvent(event.p, event.playerID) ],
@@ -129,19 +129,21 @@ export class FieldReducer {
     }
 
     const neighbours = page.getNeibhours(event.p.cell);
+
+    console.log('processSetBugEvent: neighbours', neighbours);
     
     let newEvents : Event[] = [];
     let newUpdates : Update[] = [];
 
-    const ownNeighbourWallCompnents : Component[] =
+    const ownNeighbourWallCompnents : string[] =
       _.chain(neighbours)
       .filter(n => n.cell !== null && n.cell !== undefined && n.cell.type === CellType.Wall && n.cell.playerID === event.playerID)
-      .map(n => n.cell.component)
+      .map(n => n.cell.component_id)
       .uniq()
       .value();
 
-    for (const comp of ownNeighbourWallCompnents) {
-      newUpdates.push(new ComponentsUpdate(comp.id, { isActive: true }));
+    for (const compId of ownNeighbourWallCompnents) {
+      newUpdates.push(new ComponentsUpdate(compId, { isActive: true }));
     }
 
     newUpdates.push(new FieldUpdate(
@@ -178,7 +180,7 @@ export class FieldReducer {
     const neighbourWallComponents : Component[] =
       _.chain(neighbours)
        .filter(n => n.cell !== null && n.cell !== undefined && n.cell.type === CellType.Wall && n.cell.playerID === event.playerID)
-       .map(n => n.cell.component)
+       .map(n => this.components[n.cell.component_id])
        .filter(c => !!c)
        .uniq()
        .value();
@@ -189,7 +191,7 @@ export class FieldReducer {
     const allNeighbourWallComponents : Component[] = 
       _.chain(neighbours)
       .filter(n => n.cell !== null && n.cell !== undefined && n.cell.type === CellType.Wall)
-      .map(n => n.cell.component)
+      .map(n => this.components[n.cell.component_id])
       .filter(c => !!c)
       .uniq()
       .value();
@@ -315,10 +317,10 @@ export class FieldReducer {
             update.playerID !== null && update.playerID !== undefined
             ? update.playerID
             : (value ? value.playerID : null),
-          component:
+          component_id:
             update.component !== null && update.component !== undefined
-            ? update.component
-            : (value ? value.component : null)
+            ? update.component.id
+            : (value ? value.component_id : null)
         });
     }
   }

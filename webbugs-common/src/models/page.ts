@@ -12,6 +12,7 @@ export class Page {
 
   constructor(radius: number, p: Coordinates) {
     this.radius = radius;
+    this.p = p;
 
     for (let x = - this.radius + 1; x < this.radius - 1; x++) {
       for (let y = - this.radius + 1; y < this.radius - 1; y++) {
@@ -19,6 +20,13 @@ export class Page {
       }
     }
     console.log('grid size:', Object.keys(this.grid).length);
+  }
+
+  static fromObject(page: Page) : Page {
+    const newPage = new Page(page.radius, page.p);
+    newPage.grid = page.grid;
+
+    return newPage;
   }
 
   private key(p: Coordinates) : number {
@@ -128,7 +136,7 @@ export class Page {
     this.grid[this.key(p)] = {
       type: value.type,
       playerID: value.playerID,
-      component: (value && value.component !== undefined) ? value.component : null,
+      component_id: (value && value.component_id !== undefined) ? value.component_id : null,
       p: value.p,
       page: value.page
     };

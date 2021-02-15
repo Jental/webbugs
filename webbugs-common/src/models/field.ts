@@ -20,6 +20,16 @@ export class Field {
     this.create({ x: 0, y: 0, z: 0 });
   }
 
+  static fromObject(field: Field) : Field {
+    const newField = new Field(field.pageRadius);
+    for (const key in field.grid) {
+      newField.grid[key] = Page.fromObject(field.grid[key]);
+    }
+    newField.coordinates = field.coordinates;
+
+    return newField;
+  }
+
   private key(p: Coordinates) : number {
     return p.x + 4 * MAX_FIELD_RADIUS * p.y + 16 * MAX_FIELD_RADIUS_SQ2 * p.z;
   }

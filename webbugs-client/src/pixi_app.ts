@@ -9,6 +9,7 @@ import * as EmptyCellTexture from './textures/empty_cell';
 import * as BugCellTexture from './textures/bug_cell';
 import * as WallCellTexture from './textures/wall_cell';
 import SpritePool from './sprite_pool';
+import { Component } from '../../webbugs-common/src/models/component';
 
 export const createPixiApp = (
   maxScreenSize: number,
@@ -57,8 +58,8 @@ export const createPixiApp = (
     .wheel()
     .decelerate();
 
-  const drawFn = (field: Field) => {
-    draw(field, viewport, pageRadius, cellOuterRadiusPx, onCellClick);
+  const drawFn = (field: Field, components: Record<string, Component>) => {
+    draw(field, components, viewport, pageRadius, cellOuterRadiusPx, onCellClick);
   }
 
   app.loader

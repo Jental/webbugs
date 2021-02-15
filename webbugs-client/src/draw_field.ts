@@ -7,10 +7,11 @@ import { Coordinates, FullCoordinates } from '../../webbugs-common/src/models/co
 import { Page } from '../../webbugs-common/src/models/page';
 import { Viewport } from 'pixi-viewport';
 import { CellType } from '../../webbugs-common/src/models/cell';
+import { Component } from '../../webbugs-common/src/models/component';
 
 const CELL_BORDER = 3;
 
-const draw = (field : Field, viewport: Viewport, pageRadius: number, cellOuterRadius: number, onCellClick : (p: FullCoordinates) => void) => {
+const draw = (field : Field, components: Record<string, Component>, viewport: Viewport, pageRadius: number, cellOuterRadius: number, onCellClick : (p: FullCoordinates) => void) => {
   console.log(viewport.screenWidth, viewport.screenHeight);
   const fieldCenterH = viewport.screenWidth / 2.0;
   const fieldCenterV = viewport.screenHeight / 2.0;
@@ -27,11 +28,11 @@ const draw = (field : Field, viewport: Viewport, pageRadius: number, cellOuterRa
     const offsetH = pp.x * 1.5 * outerRadius;
     const offsetV = (pp.z - pp.y) * innerRadius;
     console.log(innerRadius, outerRadius, offsetH, offsetV, fieldCenterH + offsetH, fieldCenterV + offsetV);
-    drawPage(page, pp, viewport, cellOuterRadius, fieldCenterH + offsetH, fieldCenterV + offsetV, onCellClick);
+    drawPage(page, components, pp, viewport, cellOuterRadius, fieldCenterH + offsetH, fieldCenterV + offsetV, onCellClick);
   }
 };
 
-const drawPage = (page: Page, pageP: Coordinates, viewport: Viewport, cellOuterRadius: number, centerH: number, centerV: number, onCellClick : (p: FullCoordinates) => void) => {
+const drawPage = (page: Page, components: Record<string, Component>, pageP: Coordinates, viewport: Viewport, cellOuterRadius: number, centerH: number, centerV: number, onCellClick : (p: FullCoordinates) => void) => {
   const innerRadius = Math.ceil(cellOuterRadius * Math.sqrt(3) / 2.0);
   const outerRadius = cellOuterRadius;
 
@@ -67,10 +68,10 @@ const drawPage = (page: Page, pageP: Coordinates, viewport: Viewport, cellOuterR
             let spriteName = null;
             switch (cellValue.playerID) {
             case 0:
-              spriteName = cellValue.component?.isActive ? TEXTURE_WALL_0 : (TEXTURE_WALL_0 + '_inactive');
+              spriteName = components[cellValue.component_id]?.isActive ? TEXTURE_WALL_0 : (TEXTURE_WALL_0 + '_inactive');
               break;
             case 1:
-              spriteName = cellValue.component?.isActive ? TEXTURE_WALL_1 : (TEXTURE_WALL_1 + '_inactive');
+              spriteName = components[cellValue.component_id]?.isActive ? TEXTURE_WALL_1 : (TEXTURE_WALL_1 + '_inactive');
               break;
             }
             if (spriteName) {
