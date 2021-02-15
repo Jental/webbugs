@@ -79,9 +79,6 @@ store.components$ = dataEvent$.pipe(
 metadataEvent$.subscribe((data) => {
   console.log('metadata update', data);
   playerID = data.playerID;
-  if (!(playerID in COLORS)) {
-    COLORS[playerID] = Math.floor(Math.random() * 2**24);
-  }
 });
 dataEvent$.subscribe(() => { console.log('update from server'); });
 store.field$.subscribe(() => { console.log('field update'); });

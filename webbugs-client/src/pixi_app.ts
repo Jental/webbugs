@@ -4,7 +4,7 @@ import { Viewport } from 'pixi-viewport';
 import { FullCoordinates } from '../../webbugs-common/src/models/coordinates';
 import { draw } from './draw_field';
 import { Field } from '../../webbugs-common/src/models/field';
-import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL, TEXTURE_WALL_INACTIVE } from './const';
+import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL, TEXTURE_WALL_INACTIVE, COLORS } from './const';
 import * as EmptyCellTexture from './textures/empty_cell';
 import * as BugCellTexture from './textures/bug_cell';
 import * as WallCellTexture from './textures/wall_cell';
@@ -81,6 +81,10 @@ export const createPixiApp = (
       console.log('pixi: new player ids');
 
       for (const playerID of playerIDs) {
+        if (!(playerID in COLORS)) {
+          COLORS[playerID] = Math.floor(Math.random() * 2**24);
+        }
+        
         if (!spritePool.has(`bug_${playerID}`)) {
           const namedPlayerTextures = {};
           namedPlayerTextures[TEXTURE_BUG(playerID)] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, playerID);

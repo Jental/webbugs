@@ -51,6 +51,9 @@ const drawPage = (page: Page, components: Record<string, Component>, pageP: Coor
           let cell = null;
           if (cellValue && cellValue.type === CellType.Bug) {
             const spriteName = TEXTURE_BUG(cellValue.playerID);
+            if (spriteName != 'bug_0' && spriteName != 'bug_1') {
+              console.log('sprite name:', spriteName);
+            }
             if (spriteName) {
               cell = SpritePool.getInstance().get(spriteName);
               console.log('bug cell', cell);

@@ -14,8 +14,9 @@ import { Field } from '../../webbugs-common/src/models/field';
 import { Component } from '../../webbugs-common/src/models/component';
 import { ClickContract } from '../../webbugs-common/src/contract/click_contract';
 import { FieldReducer } from './handlers';
-import { ClickEvent } from '../../webbugs-common/src/models/events';
+import { ClickEvent, SetBugEvent } from '../../webbugs-common/src/models/events';
 import { MetadataContract } from '../../webbugs-common/src/contract/metadata_contract';
+import { Coordinates } from '../../webbugs-common/src/models/coordinates';
 
 const PORT = process.env.PORT || 5000;
 const WS_PORT = process.env.WS_PORT || 5001;
@@ -53,6 +54,13 @@ const onConnect = (client: socketio.Socket) => {
     components: components
   }
   client.emit(MessageType.Data, data);
+
+  const pageP : Coordinates = {x:0, y:0, z: 0};
+  field.get(pageP)
+  .getRandomEmptyCellCoordinates()
+  .then((p: Coordinates) => {
+    reducer.handle(new SetBugEvent({page: pageP, cell: p}, newPlayerID));
+  })
 }
 
 const onClick = (data: ClickContract) => {

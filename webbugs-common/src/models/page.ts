@@ -141,4 +141,26 @@ export class Page {
       page: value.page
     };
   }
+
+  getRandomEmptyCellCoordinates(): Promise<Coordinates> {
+    return new Promise((resolve) => {
+      while(true) {
+        const p : Coordinates = {
+          x : Math.floor(Math.random() * (2 * this.radius - 1)) - this.radius + 1,
+          y : Math.floor(Math.random() * (2 * this.radius - 1)) - this.radius + 1,
+          z: 0
+        };
+        p.z = 0 - p.x - p.y;
+        if (Math.abs(p.z) >= this.radius) {
+          continue;
+        }
+
+        const key = this.key(p);
+        if (!(key in this.grid) || this.grid[key] === null) {
+          resolve(p);
+          break;
+        }
+      }
+    });
+  }
 }
