@@ -14,9 +14,10 @@ import { Field } from '../../webbugs-common/src/models/field';
 import { Component } from '../../webbugs-common/src/models/component';
 import { ClickContract } from '../../webbugs-common/src/contract/click_contract';
 import { FieldReducer } from './handlers';
-import { ClickEvent, SetBugEvent } from '../../webbugs-common/src/models/events';
+import { ClickEvent, SetBugEvent, Event } from '../../webbugs-common/src/models/events';
 import { MetadataContract } from '../../webbugs-common/src/contract/metadata_contract';
 import { Coordinates } from '../../webbugs-common/src/models/coordinates';
+import { RandomAI } from './ai/random'
 
 const PORT = process.env.PORT || 5000;
 const STATIC_PATH = path.join(__dirname, '../../../../webbugs-client/dist/');
@@ -73,7 +74,48 @@ const reCreateField = () => {
   field = fieldData.field;
   components = fieldData.components;
   reducer = fieldData.reducer;
-  playerIDs = ['0', '1'];
+  playerIDs = ['0', '1', '2', '3', '4'];
+
+  const pageP : Coordinates = {x: 0, y: 0, z: 0};
+  for (const playerID of playerIDs) {
+    field.get(pageP)
+    .getRandomEmptyCellCoordinates()
+    .then((p: Coordinates) => {
+      reducer.handle(new SetBugEvent({page: pageP, cell: p}, playerID));
+    })
+  }
+
+  setTimeout(recreateAI, 5000);
+}
+
+let aiInterval = null;
+const recreateAI = () => {
+  if (aiInterval) {
+    clearInterval(aiInterval);
+  }
+  const ais = [
+    new RandomAI(field, components, '0'),
+    new RandomAI(field, components, '1'),
+    new RandomAI(field, components, '2'),
+    new RandomAI(field, components, '3'),
+    new RandomAI(field, components, '4')
+  ];
+
+  aiInterval = setInterval(() => {
+    const events : Event[] =
+      ais
+      .map(ai => ai.next())
+      .filter(r => !r.done && r.value)
+      .map(r => r.value);
+    
+    if(events.length === 0) {
+      clearInterval(aiInterval);
+      aiInterval = null;
+    }
+    else {
+      reducer.handleA(events);
+    }
+  }, 1000);
 }
 
 const onReset = () => {

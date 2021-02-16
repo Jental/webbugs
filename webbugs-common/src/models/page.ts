@@ -1,5 +1,7 @@
 import { Cell, CellType } from "./cell";
 import { Coordinates } from "./coordinates";
+// @ts-ignore
+import _ from 'lodash';
 
 // Page items are pointy-top:
 //    /\
@@ -84,7 +86,8 @@ export class Page {
       this.decByY(p),
       this.incByZ(p),
       this.decByZ(p)
-    ];
+    ]
+    .filter(p => Math.abs(p.x) < this.radius && Math.abs(p.y) < this.radius && Math.abs(p.z) < this.radius);
   }
 
   getNeibhours(p: Coordinates) : {p: Coordinates, cell: Cell}[] {
@@ -137,8 +140,7 @@ export class Page {
       type: value.type,
       playerID: value.playerID,
       component_id: (value && value.component_id !== undefined) ? value.component_id : null,
-      p: value.p,
-      page: value.page
+      p: value.p
     };
   }
 
@@ -162,5 +164,9 @@ export class Page {
         }
       }
     });
+  }
+
+  getPlayerCells(playerID: string) : Cell[] {
+    return Object.values(this.grid).filter(c => c !== null && c !== undefined && c.playerID === playerID);
   }
 }

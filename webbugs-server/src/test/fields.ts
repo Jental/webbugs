@@ -19,8 +19,7 @@ const fillPageWithRandom = (field : Field, pageP: Coordinates) : void =>  {
             {
               type: CellType.Bug,
               playerID : '1',
-              page: page,
-              p: { x,y,z }
+              p: { page: pageP, cell: {x,y,z}}
             });
         }
         else if (rndVal >= 9.0 && rndVal < 10.0) {
@@ -30,8 +29,7 @@ const fillPageWithRandom = (field : Field, pageP: Coordinates) : void =>  {
             {
               type: CellType.Wall,
               playerID : '1',
-              page: page,
-              p: {x,y,z}
+              p: { page: pageP, cell: {x,y,z}}
             });
         }
       }
@@ -144,7 +142,7 @@ export const fieldForWallConnectionTest = (onUpdate: () => void) : {
   components: Record<string, Component>,
   reducer: FieldReducer
 } => {
-  const pageRadius = 10;
+  const pageRadius = 30;
   const field = new Field(pageRadius);
   const components : Record<string, Component> = {};
   const reducer = new FieldReducer(field, components, onUpdate);

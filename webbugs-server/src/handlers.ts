@@ -172,8 +172,7 @@ export class FieldReducer {
     const wall : Cell = {
       type: CellType.Wall,
       playerID: event.playerID,
-      page: page,
-      p: event.p.cell
+      p: event.p
     };
 
     const neighbours = page.getNeibhours(event.p.cell);
@@ -229,7 +228,7 @@ export class FieldReducer {
 
       for (const w of allWalls) {
         newUpdates.push(new FieldUpdate(
-          { page: {x: 0, y:0 ,z:0}, cell: w.p }, // TDDO Fix coordinates (w.page.p)
+          w.p,
           { component: component }
         ));
       }
@@ -264,7 +263,7 @@ export class FieldReducer {
     const playerID = component.walls[0].playerID;
     const isActive =
       _.chain(component.walls)
-      .flatMap(w => page.getNeibhours(w.p))
+      .flatMap(w => page.getNeibhours(w.p.cell))
       .uniq()
       .filter(n => n.cell && n.cell.type === CellType.Bug && n.cell.playerID === playerID)
       .value()
@@ -320,7 +319,8 @@ export class FieldReducer {
           component_id:
             update.component !== null && update.component !== undefined
             ? update.component.id
-            : (value ? value.component_id : null)
+            : (value ? value.component_id : null),
+          p: update.p
         });
     }
   }

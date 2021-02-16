@@ -1,5 +1,5 @@
 import { Component } from "./component";
-import { Coordinates } from "./coordinates";
+import { Coordinates, FullCoordinates } from "./coordinates";
 import { Page } from "./page";
 
 export enum CellType {
@@ -11,6 +11,5 @@ export interface Cell {
   type: CellType,
   playerID: string,
   component_id?: string,
-  page: Page,
-  p: Coordinates
+  p: FullCoordinates
 }
