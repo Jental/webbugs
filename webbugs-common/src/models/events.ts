@@ -23,10 +23,12 @@ export class SetBugEvent {
   type: EventType = EventType.SetBug;
   p: FullCoordinates;
   playerID: string;
+  isBase: boolean;
 
-  constructor(p: FullCoordinates, playerID: string) {
+  constructor(p: FullCoordinates, playerID: string, isBase: boolean) {
     this.p = p;
     this.playerID = playerID;
+    this.isBase = isBase;
   }
 };
 

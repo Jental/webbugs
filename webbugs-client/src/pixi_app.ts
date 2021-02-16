@@ -4,7 +4,7 @@ import { Viewport } from 'pixi-viewport';
 import { FullCoordinates } from '../../webbugs-common/src/models/coordinates';
 import { draw } from './draw_field';
 import { Field } from '../../webbugs-common/src/models/field';
-import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL, TEXTURE_WALL_INACTIVE, COLORS } from './const';
+import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL, TEXTURE_WALL_INACTIVE, COLORS, TEXTURE_BASE } from './const';
 import * as EmptyCellTexture from './textures/empty_cell';
 import * as BugCellTexture from './textures/bug_cell';
 import * as WallCellTexture from './textures/wall_cell';
@@ -13,7 +13,7 @@ import { Component } from '../../webbugs-common/src/models/component';
 import { Observable } from 'rxjs';
 
 export interface PixiInitResult {
-  drawFn: (field: Field, components: Record<string, Component>) => void
+  drawFn: (field: Field, components: Record<string, Component>, currentPlayerID: string) => void
 }
 
 export const createPixiApp = (
@@ -63,9 +63,9 @@ export const createPixiApp = (
     .wheel()
     .decelerate();
 
-  const drawFn = (field: Field, components: Record<string, Component>) => {
+  const drawFn = (field: Field, components: Record<string, Component>, currentPlayerID: string) => {
     console.log('pixi: draw');
-    draw(field, components, viewport, pageRadius, cellOuterRadiusPx, onCellClick);
+    draw(field, components, viewport, pageRadius, cellOuterRadiusPx, currentPlayerID, onCellClick);
   }
 
   app.loader
@@ -87,7 +87,8 @@ export const createPixiApp = (
         
         if (!spritePool.has(`bug_${playerID}`)) {
           const namedPlayerTextures = {};
-          namedPlayerTextures[TEXTURE_BUG(playerID)] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, playerID);
+          namedPlayerTextures[TEXTURE_BUG(playerID)] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, playerID, false);
+          namedPlayerTextures[TEXTURE_BASE(playerID)] = BugCellTexture.create(app.renderer, cellOuterRadiusPx, playerID, true);
           namedPlayerTextures[TEXTURE_WALL(playerID)] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, playerID, true);
           namedPlayerTextures[TEXTURE_WALL_INACTIVE(playerID)] = WallCellTexture.create(app.renderer, cellOuterRadiusPx, playerID, false);
           spritePool.add(namedPlayerTextures);

@@ -1,5 +1,6 @@
 export const TEXTURE_EMPTY = 'empty';
 export const TEXTURE_BUG = (playerID: string) => `bug_${playerID}`;
+export const TEXTURE_BASE = (playerID: string) => `base_${playerID}`;
 export const TEXTURE_WALL = (playerID: string) => `wall_${playerID}`;
 export const TEXTURE_WALL_INACTIVE = (playerID: string) => `wall_${playerID}_inactive`;
 

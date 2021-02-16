@@ -1,7 +1,7 @@
 import * as pixi from 'pixi.js';
 
 import SpritePool from './sprite_pool';
-import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL, TEXTURE_WALL_INACTIVE } from './const';
+import { TEXTURE_EMPTY, TEXTURE_BUG, TEXTURE_WALL, TEXTURE_WALL_INACTIVE, TEXTURE_BASE } from './const';
 import { Field } from '../../webbugs-common/src/models/field';
 import { Coordinates, FullCoordinates } from '../../webbugs-common/src/models/coordinates';
 import { Page } from '../../webbugs-common/src/models/page';
@@ -11,15 +11,15 @@ import { Component } from '../../webbugs-common/src/models/component';
 
 const CELL_BORDER = 3;
 
-const draw = (field : Field, components: Record<string, Component>, viewport: Viewport, pageRadius: number, cellOuterRadius: number, onCellClick : (p: FullCoordinates) => void) => {
-  console.log(viewport.screenWidth, viewport.screenHeight);
+const draw = (field : Field, components: Record<string, Component>, viewport: Viewport, pageRadius: number, cellOuterRadius: number, currentPlayerID: string, onCellClick : (p: FullCoordinates) => void) => {
+  // console.log(viewport.screenWidth, viewport.screenHeight);
   const fieldCenterH = viewport.screenWidth / 2.0;
   const fieldCenterV = viewport.screenHeight / 2.0;
 
   for (let pp of Object.values(field.coordinates)) {
     const page = field.get(pp);
     const cellInnerRadius = cellOuterRadius * Math.sqrt(3) / 2.0;
-    console.log('draw:', page, pageRadius, cellInnerRadius, cellOuterRadius);
+    // console.log('draw:', page, pageRadius, cellInnerRadius, cellOuterRadius);
     const outerRadius = (pageRadius * 2 - 1) * (cellInnerRadius + 0.5 + CELL_BORDER) + (3 - CELL_BORDER); // last part - emperical fix
     const innerRadius =
           pageRadius % 2 === 0 
@@ -27,16 +27,14 @@ const draw = (field : Field, components: Record<string, Component>, viewport: Vi
           : ((pageRadius - 1) * 1.5 + 1) * (cellOuterRadius + 0.5)  + (pageRadius - 1) * CELL_BORDER * Math.sqrt(3) / 2.0 + (CELL_BORDER * Math.sqrt(3) * (pageRadius - 1) / 4); // last part - emperical fix
     const offsetH = pp.x * 1.5 * outerRadius;
     const offsetV = (pp.z - pp.y) * innerRadius;
-    console.log(innerRadius, outerRadius, offsetH, offsetV, fieldCenterH + offsetH, fieldCenterV + offsetV);
-    drawPage(page, components, pp, viewport, cellOuterRadius, fieldCenterH + offsetH, fieldCenterV + offsetV, onCellClick);
+    // console.log(innerRadius, outerRadius, offsetH, offsetV, fieldCenterH + offsetH, fieldCenterV + offsetV);
+    drawPage(page, components, pp, viewport, cellOuterRadius, fieldCenterH + offsetH, fieldCenterV + offsetV, currentPlayerID, onCellClick);
   }
 };
 
-const drawPage = (page: Page, components: Record<string, Component>, pageP: Coordinates, viewport: Viewport, cellOuterRadius: number, centerH: number, centerV: number, onCellClick : (p: FullCoordinates) => void) => {
+const drawPage = (page: Page, components: Record<string, Component>, pageP: Coordinates, viewport: Viewport, cellOuterRadius: number, centerH: number, centerV: number, currentPlayerID: string, onCellClick : (p: FullCoordinates) => void) => {
   const innerRadius = Math.ceil(cellOuterRadius * Math.sqrt(3) / 2.0);
   const outerRadius = cellOuterRadius;
-
-  console.log('center', centerH, centerV);
 
   const pageCtr = new pixi.Container();
 
@@ -50,23 +48,18 @@ const drawPage = (page: Page, components: Record<string, Component>, pageP: Coor
 
           let cell = null;
           if (cellValue && cellValue.type === CellType.Bug) {
-            const spriteName = TEXTURE_BUG(cellValue.playerID);
-            if (spriteName != 'bug_0' && spriteName != 'bug_1') {
-              console.log('sprite name:', spriteName);
-            }
-            if (spriteName) {
-              cell = SpritePool.getInstance().get(spriteName);
-              console.log('bug cell', cell);
-            }
+            const spriteName = 
+              (cellValue.playerID === currentPlayerID && cellValue.isBase)
+              ? TEXTURE_BASE(cellValue.playerID)
+              : TEXTURE_BUG(cellValue.playerID);
+            cell = SpritePool.getInstance().get(spriteName);
           }
           else if (cellValue && cellValue.type === CellType.Wall) {
             const spriteName =
               components[cellValue.component_id]?.isActive
               ? TEXTURE_WALL(cellValue.playerID)
               : TEXTURE_WALL_INACTIVE(cellValue.playerID);
-            if (spriteName) {
-              cell = SpritePool.getInstance().get(spriteName);
-            }
+            cell = SpritePool.getInstance().get(spriteName);
           }
           else {
             cell = SpritePool.getInstance().get(TEXTURE_EMPTY);
@@ -75,9 +68,6 @@ const drawPage = (page: Page, components: Record<string, Component>, pageP: Coor
           if (cell) {
             cell.anchor.x = 0.5;
             cell.anchor.y = 0.5;
-            if (x === 0 && y === 0) {
-              console.log('cell size', innerRadius, outerRadius);
-            }
             cell.position.set(offsetH, offsetV);
             pageCtr.addChild(cell);
           }

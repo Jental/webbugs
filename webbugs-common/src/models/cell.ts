@@ -11,5 +11,6 @@ export interface Cell {
   type: CellType,
   playerID: string,
   component_id?: string,
-  p: FullCoordinates
+  p: FullCoordinates,
+  isBase?: boolean
 }

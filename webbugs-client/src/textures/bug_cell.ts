@@ -2,7 +2,7 @@ import * as pixi from 'pixi.js';
 import { ColorReplaceFilter } from 'pixi-filters';
 import { COLORS } from '../const';
 
-const create = (renderer: pixi.Renderer, outerRadius: number, playerID: string) => {
+const create = (renderer: pixi.Renderer, outerRadius: number, playerID: string, isBase: boolean) => {
   const innerRadiusRaw = outerRadius * Math.sqrt(3) / 2.0;
   const innerRadius = Math.ceil(innerRadiusRaw);
 
@@ -12,6 +12,7 @@ const create = (renderer: pixi.Renderer, outerRadius: number, playerID: string) 
   // const textureName = `ant${playerID}.png`;
   const textureName = 'ant.png';
   const antTexture = pixi.utils.TextureCache[textureName];
+  const color = COLORS[playerID];
 
   const centerH = innerRadius + 1;
   const centerV = outerRadius + 1;
@@ -31,6 +32,24 @@ const create = (renderer: pixi.Renderer, outerRadius: number, playerID: string) 
   ];
   graphics.drawPolygon(path);
 
+  if (isBase) {
+    const width = 2;
+    const offset = width + 1;
+
+    graphics.lineStyle(width, color, 1);
+
+    const path = [
+      centerH - innerRadiusRaw + offset, centerV + outerRadius / 2.0,
+      centerH - innerRadiusRaw + offset, centerV - outerRadius / 2.0,
+      centerH, centerV - outerRadius + offset,
+      centerH + innerRadiusRaw - offset, centerV - outerRadius / 2.0,
+      centerH + innerRadiusRaw - offset, centerV + outerRadius / 2.0,
+      centerH, centerV + outerRadius - offset,
+      centerH - innerRadiusRaw + offset, centerV + outerRadius / 2.0
+    ];
+    graphics.drawPolygon(path);
+  }
+
   const ant = new pixi.Sprite(antTexture);
   ant.x = centerH - innerRadius + 1;
   ant.y = centerV - innerRadius + 1;
@@ -38,7 +57,7 @@ const create = (renderer: pixi.Renderer, outerRadius: number, playerID: string) 
   ant.width = size;
   ant.height = size;
 
-  const filter = new ColorReplaceFilter(0x000000, COLORS[playerID], 0.1);
+  const filter = new ColorReplaceFilter(0x000000, color, 0.1);
   ant.filters = [filter];
 
   let ctr = new pixi.Container();

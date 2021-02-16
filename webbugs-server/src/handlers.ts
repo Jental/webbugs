@@ -92,7 +92,7 @@ export class FieldReducer {
             || (n.cell.type === CellType.Wall && this.components[n.cell.component_id]?.isActive)));
       if (activeNeighbour !== null && activeNeighbour !== undefined) {
         return {
-          events: [ new SetBugEvent(event.p, event.playerID) ],
+          events: [ new SetBugEvent(event.p, event.playerID, false) ],
           updates: []
         }
       }
@@ -150,7 +150,8 @@ export class FieldReducer {
       event.p,
       {
         cellType: CellType.Bug,
-        playerID: event.playerID
+        playerID: event.playerID,
+        isBase: event.isBase
       }));
 
     return {
@@ -320,6 +321,10 @@ export class FieldReducer {
             update.component !== null && update.component !== undefined
             ? update.component.id
             : (value ? value.component_id : null),
+          isBase: 
+            update.isBase !== null && update.isBase !== undefined
+            ? update.isBase
+            : (value ? value.isBase : false),
           p: update.p
         });
     }

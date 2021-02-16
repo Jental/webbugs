@@ -1,5 +1,5 @@
 import { Observable, fromEvent, from, combineLatest } from 'rxjs';
-import { map, filter } from 'rxjs/operators';
+import { map, filter, debounceTime } from 'rxjs/operators';
 import { io } from 'socket.io-client';
 
 import { Field } from '../../webbugs-common/src/models/field';
@@ -93,24 +93,25 @@ metadataEvent$.subscribe((data) => {
           el.innerHTML = `<label style="color: ${hexColor};"><input type="radio" name="active-player" value="${pid}" ${(pid === playerID) ? 'checked' : ''}/>${pid}</label>`;
           playersEl.appendChild(el);
         }
-        // else {
-        //   const el = document.createElement('li');
-        //   el.innerHTML = `<span style="color: ${hexColor};">${pid}</span>`;
-        //   playersEl.appendChild(el);
-        // }
+        else {
+          const el = document.createElement('li');
+          el.innerHTML = `<span style="color: ${hexColor};">${pid}</span>`;
+          playersEl.appendChild(el);
+        }
       }
     }
   }, 500);
 });
-dataEvent$.subscribe(() => { console.log('update from server'); });
-store.field$.subscribe(() => { console.log('field update'); });
-store.components$.subscribe(() => { console.log('components update'); });
-pixiInit$.subscribe(() => { console.log('pixi initialized'); });
+// dataEvent$.subscribe(() => { console.log('update from server'); });
+// store.field$.subscribe(() => { console.log('field update'); });
+// store.components$.subscribe(() => { console.log('components update'); });
+// pixiInit$.subscribe(() => { console.log('pixi initialized'); });
 
-combineLatest([pixiInit$, store.field$, store.components$])
-.subscribe(([pixiInitData, field, components]) => {
+combineLatest([pixiInit$, store.field$, store.components$, metadataEvent$])
+.pipe(debounceTime(500))
+.subscribe(([pixiInitData, field, components, metadata]) => {
   // @ts-ignore
   window.field = field; window.components = components;
 
-  pixiInitData.drawFn(field, components);
+  pixiInitData.drawFn(field, components, metadata.playerID);
 });

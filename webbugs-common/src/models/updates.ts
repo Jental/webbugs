@@ -16,12 +16,14 @@ export class FieldUpdate {
   playerID? : string;
   cellType?: CellType;
   component? : Component;
+  isBase? : boolean;
 
-  constructor (p: FullCoordinates, update: { playerID?: string, cellType?: CellType, component?: Component }) {
+  constructor (p: FullCoordinates, update: { playerID?: string, cellType?: CellType, component?: Component, isBase?: boolean }) {
     this.p = p;
     this.playerID = update.playerID;
     this.cellType = update.cellType;
     this.component = update.component;
+    this.isBase = update.isBase;
   }
 }
 

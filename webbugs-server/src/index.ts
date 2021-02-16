@@ -18,6 +18,7 @@ import { ClickEvent, SetBugEvent, Event } from '../../webbugs-common/src/models/
 import { MetadataContract } from '../../webbugs-common/src/contract/metadata_contract';
 import { Coordinates } from '../../webbugs-common/src/models/coordinates';
 import { RandomAI } from './ai/random'
+import { EatAI } from './ai/eat';
 
 const PORT = process.env.PORT || 5000;
 const STATIC_PATH = path.join(__dirname, '../../../../webbugs-client/dist/');
@@ -59,7 +60,7 @@ const onConnect = (client: socketio.Socket) => {
   field.get(pageP)
   .getRandomEmptyCellCoordinates()
   .then((p: Coordinates) => {
-    reducer.handle(new SetBugEvent({page: pageP, cell: p}, newPlayerID));
+    reducer.handle(new SetBugEvent({page: pageP, cell: p}, newPlayerID, true));
   })
 }
 
@@ -74,14 +75,14 @@ const reCreateField = () => {
   field = fieldData.field;
   components = fieldData.components;
   reducer = fieldData.reducer;
-  playerIDs = ['0', '1', '2', '3', '4'];
+  playerIDs = ['0', '1', 'random0', 'random1', 'eat0', 'eat1'];
 
   const pageP : Coordinates = {x: 0, y: 0, z: 0};
   for (const playerID of playerIDs) {
     field.get(pageP)
     .getRandomEmptyCellCoordinates()
     .then((p: Coordinates) => {
-      reducer.handle(new SetBugEvent({page: pageP, cell: p}, playerID));
+      reducer.handle(new SetBugEvent({page: pageP, cell: p}, playerID, true));
     })
   }
 
@@ -94,11 +95,10 @@ const recreateAI = () => {
     clearInterval(aiInterval);
   }
   const ais = [
-    new RandomAI(field, components, '0'),
-    new RandomAI(field, components, '1'),
-    new RandomAI(field, components, '2'),
-    new RandomAI(field, components, '3'),
-    new RandomAI(field, components, '4')
+    new RandomAI(field, components, 'random0'),
+    new RandomAI(field, components, 'random1'),
+    new EatAI(field, components, 'eat0'),
+    new EatAI(field, components, 'eat1')
   ];
 
   aiInterval = setInterval(() => {

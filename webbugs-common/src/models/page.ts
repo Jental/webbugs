@@ -21,7 +21,7 @@ export class Page {
         this.grid[this.key({ x, y, z: 0-x-y })] = null;
       }
     }
-    console.log('grid size:', Object.keys(this.grid).length);
+    // console.log('grid size:', Object.keys(this.grid).length);
   }
 
   static fromObject(page: Page) : Page {
@@ -140,7 +140,8 @@ export class Page {
       type: value.type,
       playerID: value.playerID,
       component_id: (value && value.component_id !== undefined) ? value.component_id : null,
-      p: value.p
+      p: value.p,
+      isBase: (value.isBase !== null || value.isBase !== undefined) ? value.isBase : false
     };
   }
 

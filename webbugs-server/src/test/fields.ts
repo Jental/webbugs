@@ -147,9 +147,9 @@ export const fieldForWallConnectionTest = (onUpdate: () => void) : {
   const components : Record<string, Component> = {};
   const reducer = new FieldReducer(field, components, onUpdate);
 
-  reducer.handle(new SetBugEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 0, z: 0 }}, '0'));
-  reducer.handle(new SetBugEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 4, y: 1, z: -5 }}, '0'));
-  reducer.handle(new SetBugEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -4, z: 4 }}, '1'));
+  reducer.handle(new SetBugEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 0, z: 0 }}, '0', true));
+  reducer.handle(new SetBugEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 4, y: 1, z: -5 }}, '0', false));
+  reducer.handle(new SetBugEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: -4, z: 4 }}, '1', true));
 
   // First wall component
   reducer.handle(new SetWallEvent({ page: {x: 0, y: 0, z: 0 }, cell: { x: 0, y: 1, z: -1 }}, '0'));
