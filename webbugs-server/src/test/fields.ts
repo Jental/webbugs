@@ -4,6 +4,7 @@ import { Coordinates } from '../../../webbugs-common/src/models/coordinates';
 import { CellType } from '../../../webbugs-common/src/models/cell';
 import { Component } from '../../../webbugs-common/src/models/component';
 import { SetBugEvent, SetWallEvent } from '../../../webbugs-common/src/models/events';
+import { Settings } from '../settings';
 
 const fillPageWithRandom = (field : Field, pageP: Coordinates) : void =>  {
   const page = field.get(pageP);
@@ -176,3 +177,17 @@ export const fieldForWallConnectionTest = (onUpdate: () => void) : {
 
   return { field, pageRadius, components, reducer };
 };
+
+export const emptyField = (onUpdate: () => void) : {
+  field: Field,
+  pageRadius: number,
+  components: Record<string, Component>,
+  reducer: FieldReducer
+} => {
+  const pageRadius = Settings.PageRadius;
+  const field = new Field(pageRadius);
+  const components : Record<string, Component> = {};
+  const reducer = new FieldReducer(field, components, onUpdate);
+
+  return { field, pageRadius, components, reducer };
+}

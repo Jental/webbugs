@@ -8,7 +8,7 @@ import { ClickEvent, Event } from '../../../webbugs-common/src/models/events';
 export class EatAI implements Iterable<Event> {
   private field: Field;
   private components: Record<string, Component>;
-  private playerID: string;
+  playerID: string;
 
   constructor(field: Field, components: Record<string, Component>, playerID: string) {
     this.field = field;

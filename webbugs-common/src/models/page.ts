@@ -136,13 +136,18 @@ export class Page {
   }
 
   set(p: Coordinates, value: Cell) : void {
-    this.grid[this.key(p)] = {
-      type: value.type,
-      playerID: value.playerID,
-      component_id: (value && value.component_id !== undefined) ? value.component_id : null,
-      p: value.p,
-      isBase: (value.isBase !== null || value.isBase !== undefined) ? value.isBase : false
-    };
+    if (value) {
+      this.grid[this.key(p)] = {
+        type: value.type,
+        playerID: value.playerID,
+        component_id: (value && value.component_id !== undefined) ? value.component_id : null,
+        p: value.p,
+        isBase: (value.isBase !== null || value.isBase !== undefined) ? value.isBase : false
+      };
+    }
+    else {
+      this.grid[this.key(p)] = null;
+    }
   }
 
   getRandomEmptyCellCoordinates(): Promise<Coordinates> {
@@ -169,5 +174,12 @@ export class Page {
 
   getPlayerCells(playerID: string) : Cell[] {
     return Object.values(this.grid).filter(c => c !== null && c !== undefined && c.playerID === playerID);
+  }
+
+  removePlayer(playerID: string): void {
+    const ps = this.getPlayerCells(playerID).map(c => c.p.cell);
+    for (const p of ps) {
+      this.set(p, null);
+    }
   }
 }

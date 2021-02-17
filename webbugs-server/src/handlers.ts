@@ -82,7 +82,7 @@ export class FieldReducer {
     }
 
     const value = page.get(event.p.cell);
-    
+    // console.log('processClickEvent: value:', value);
     if (value === null || value === undefined) {
       const neighbours = page.getNeibhours(event.p.cell);
       const activeNeighbour =
@@ -90,6 +90,8 @@ export class FieldReducer {
           n.cell && n.cell.playerID === event.playerID && (
             n.cell.type === CellType.Bug
             || (n.cell.type === CellType.Wall && this.components[n.cell.component_id]?.isActive)));
+      // console.log('processClickEvent: neighbours:', neighbours);
+      // console.log('processClickEvent: activeNeighbour:', activeNeighbour);
       if (activeNeighbour !== null && activeNeighbour !== undefined) {
         return {
           events: [ new SetBugEvent(event.p, event.playerID, false) ],
