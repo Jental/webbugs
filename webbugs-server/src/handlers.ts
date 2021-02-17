@@ -131,8 +131,7 @@ export class FieldReducer {
     }
 
     const neighbours = page.getNeibhours(event.p.cell);
-
-    console.log('processSetBugEvent: neighbours', neighbours);
+    // console.log('processSetBugEvent: neighbours', neighbours);
     
     let newEvents : Event[] = [];
     let newUpdates : Update[] = [];
@@ -198,7 +197,7 @@ export class FieldReducer {
       .uniq()
       .value();
 
-    console.log('events: processSetWallEvent: neighbours:', neighbourWallComponents.length);
+    // console.log('events: processSetWallEvent: neighbours:', neighbourWallComponents.length);
     
     if (neighbourWallComponents.length === 0) {
       component = {

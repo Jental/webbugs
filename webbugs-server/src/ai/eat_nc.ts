@@ -5,8 +5,9 @@ import { Coordinates } from '../../../webbugs-common/src/models/coordinates';
 import { Field } from '../../../webbugs-common/src/models/field';
 import { ClickEvent, Event } from '../../../webbugs-common/src/models/events';
 
-// Eats first if possible
-export class EatAI implements Iterable<Event> {
+// Eats first if possible.
+// Don't come close to active enemy walls
+export class EatNcAI implements Iterable<Event> {
   private field: Field;
   private components: Record<string, Component>;
   playerID: string;
@@ -41,6 +42,22 @@ export class EatAI implements Iterable<Event> {
       allActiveCellNeighbours
       .filter(c => c.cell === null || c.cell === undefined)
       .map(c => c.p);
+    const allActiveCellEmptyNeighbourCoordinatesWithNoWallNear =
+      allActiveCellEmptyNeighbourCoordinates
+      .map(p => ({
+        isActiveNeighbourPreset:
+          page
+          .getNeibhours(p)
+          .findIndex(n =>
+            n.cell !== null && n.cell !== undefined
+            && n.cell.playerID !== this.playerID && n.cell.type === CellType.Wall
+            && n.cell.component_id in this.components
+            && this.components[n.cell.component_id].isActive
+          ) >= 0,
+        p: p
+      }))
+      .filter(d => !d.isActiveNeighbourPreset)
+      .map(d => d.p);
 
     if (allActiveCellBugNeighbourCoordinates.length > 0) {
       const idx = Math.floor(Math.random() * allActiveCellBugNeighbourCoordinates.length);
@@ -52,6 +69,17 @@ export class EatAI implements Iterable<Event> {
         done: false,
         value: result
       };    
+    }
+    else if (allActiveCellEmptyNeighbourCoordinatesWithNoWallNear.length > 0) {
+      const idx = Math.floor(Math.random() * allActiveCellEmptyNeighbourCoordinatesWithNoWallNear.length);
+      const result = new ClickEvent(
+        {page: {x: 0, y: 0, z: 0}, cell: allActiveCellEmptyNeighbourCoordinatesWithNoWallNear[idx]},
+        this.playerID);
+      
+      return {
+        done: false,
+        value: result
+      };      
     }
     else if (allActiveCellEmptyNeighbourCoordinates.length > 0) {
       const idx = Math.floor(Math.random() * allActiveCellEmptyNeighbourCoordinates.length);

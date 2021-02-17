@@ -23,6 +23,7 @@ import { combineLatest, Subject, timer, zip } from 'rxjs';
 import { distinctUntilChanged, scan, map, delay } from 'rxjs/operators';
 import _ from 'lodash';
 import { Settings } from './settings';
+import { EatNcAI } from './ai/eat_nc';
 
 const PORT = process.env.PORT || Settings.Port;
 const STATIC_PATH = path.join(__dirname, '../../../../webbugs-client/dist/');
@@ -143,6 +144,8 @@ const recreateAI = () => {
              return new RandomAI(field, components, k);
            case 'EatAI':
              return new EatAI(field, components, k);
+            case 'EatNcAI':
+            return new EatNcAI(field, components, k);
            default:
              return null;
          }
