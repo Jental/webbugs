@@ -79,9 +79,11 @@ const drawPage = (page: Page, components: Record<string, Component>, pageP: Coor
   pageCtr.interactive = true;
   pageCtr.on('mouseup', (e) => {
     console.log('mouseup', e.data.global.x, e.data.global.y, e);
+    console.log('center', centerH, centerV);
+    console.log('viewport', viewport.position.x, viewport.position.y);
 
-    const clickOffsetH = e.data.global.x - centerH;
-    const clickOffsetV = e.data.global.y - centerV;
+    const clickOffsetH = e.data.global.x - centerH - viewport.position.x;
+    const clickOffsetV = e.data.global.y - centerV - viewport.position.y;
     console.log('offsets[px; 2d]', clickOffsetH, clickOffsetV);
 
 // offsetH = (x - y) / 2 * (2 * innerRadius + 1 + CELL_BORDER)
