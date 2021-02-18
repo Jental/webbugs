@@ -1,6 +1,6 @@
 export class Settings {
   static Port = 5000;
-  static PageRadius = 10;
+  static PageRadius = 50;
   static AIs = {
     '0': null,
     '1': null,

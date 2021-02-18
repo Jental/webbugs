@@ -1,5 +1,5 @@
 import { Observable, fromEvent, from, combineLatest } from 'rxjs';
-import { map, filter, debounceTime } from 'rxjs/operators';
+import { map, filter, debounceTime, auditTime } from 'rxjs/operators';
 import { io } from 'socket.io-client';
 
 import { Field } from '../../webbugs-common/src/models/field';
@@ -108,10 +108,12 @@ metadataEvent$.subscribe((data) => {
 // pixiInit$.subscribe(() => { console.log('pixi initialized'); });
 
 combineLatest([pixiInit$, store.field$, store.components$, metadataEvent$])
-.pipe(debounceTime(500))
+.pipe(auditTime(500))
 .subscribe(([pixiInitData, field, components, metadata]) => {
   // @ts-ignore
   window.field = field; window.components = components;
 
   pixiInitData.drawFn(field, components, metadata.playerID);
 });
+
+socket.emit(MessageType.Register);

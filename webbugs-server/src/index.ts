@@ -14,22 +14,20 @@ import { Field } from '../../webbugs-common/src/models/field';
 import { Component } from '../../webbugs-common/src/models/component';
 import { ClickContract } from '../../webbugs-common/src/contract/click_contract';
 import { FieldReducer } from './handlers';
-import { ClickEvent, SetBugEvent, Event, SetWallEvent } from '../../webbugs-common/src/models/events';
+import { ClickEvent, SetBugEvent, Event } from '../../webbugs-common/src/models/events';
 import { MetadataContract } from '../../webbugs-common/src/contract/metadata_contract';
 import { Coordinates } from '../../webbugs-common/src/models/coordinates';
-import { RandomAI } from './ai/random'
-import { EatAI } from './ai/eat';
-import { combineLatest, Subject, timer, zip } from 'rxjs';
+import { combineLatest, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, scan, map, delay } from 'rxjs/operators';
 import _ from 'lodash';
 import { Settings } from './settings';
-import { EatNcAI } from './ai/eat_nc';
+import { Player } from './models/player';
 
 const PORT = process.env.PORT || Settings.Port;
 const STATIC_PATH = path.join(__dirname, '../../../../webbugs-client/dist/');
 
 let connectedClients : any[] = [];
-let playerIDs : string[] = [];
+let players : Record<string, Player> = {};
 let field : Field = null;
 let components: Record<string, Component> = {}
 let reducer: FieldReducer = null;
@@ -71,26 +69,11 @@ const onFieldUpdate = () => {
 }
 
 const onConnect = (client: socketio.Socket) => {
-  const newPlayerID = uuid();
-  playerIDs.push(newPlayerID);
-  const metadata : MetadataContract = {
-    playerID: newPlayerID,
-    playerIDs: playerIDs
-  };
-  client.emit(MessageType.Metadata, metadata);
-
   const data: DataContract = {
     field: field,
     components: components
   }
   client.emit(MessageType.Data, data);
-
-  const pageP : Coordinates = {x:0, y:0, z:0};
-  field.get(pageP)
-  .getRandomEmptyCellCoordinates()
-  .then((p: Coordinates) => {
-    events$.next(new SetBugEvent({page: pageP, cell: p}, newPlayerID, true));
-  })
 }
 
 const onClick = (data: ClickContract) => {
@@ -100,8 +83,31 @@ const onClick = (data: ClickContract) => {
   }
 }
 
+const onRegister = (client: socketio.Socket) => {
+  const newPlayerID = uuid();
+  players[newPlayerID] = {
+    id: newPlayerID,
+    name: newPlayerID,
+    client: client
+  };
+
+  const metadata : MetadataContract = {
+    playerID: newPlayerID,
+    playerIDs: Object.keys(players)
+  };
+  client.emit(MessageType.Metadata, metadata);
+
+  const pageP : Coordinates = {x:0, y:0, z:0};
+  field.get(pageP)
+  .getRandomEmptyCellCoordinates()
+  .then((p: Coordinates) => {
+    events$.next(new SetBugEvent({page: pageP, cell: p}, newPlayerID, true));
+  });
+}
+
 const removePlayer = (playerID: string): void => {
-  playerIDs.splice(playerIDs.indexOf(playerID));
+  delete players[playerID];
+
   const pageP : Coordinates = {x:0, y:0, z:0};
   field.get(pageP).removePlayer(playerID);
 }
@@ -112,10 +118,14 @@ const reCreateField = () => {
   field = fieldData.field;
   components = fieldData.components;
   reducer = fieldData.reducer;
-  playerIDs = Object.keys(Settings.AIs);
+  players = _.mapValues(Settings.AIs, (v, playerID) => ({
+    id: playerID,
+    name: playerID,
+    client: null
+  }));
 
   const pageP : Coordinates = {x: 0, y: 0, z: 0};
-  for (const playerID of playerIDs) {
+  for (const playerID in players) {
     field.get(pageP)
     .getRandomEmptyCellCoordinates()
     .then((p: Coordinates) => {
@@ -123,57 +133,6 @@ const reCreateField = () => {
       events$.next(event);
     })
   }
-
-  setTimeout(recreateAI, 5000);
-}
-
-let aiInterval = null;
-const recreateAI = () => {
-  if (aiInterval) {
-    clearInterval(aiInterval);
-  }
-  const ais =
-    _.chain(Settings.AIs)
-     .map((v,k) => {
-       if (!v) {
-         return null;
-       }
-       else {
-         switch (v) {
-           case 'RandomAI':
-             return new RandomAI(field, components, k);
-           case 'EatAI':
-             return new EatAI(field, components, k);
-            case 'EatNcAI':
-            return new EatNcAI(field, components, k);
-           default:
-             return null;
-         }
-       }
-     })
-     .filter(r => r !== null)
-     .value();
-
-  aiInterval = setInterval(() => {
-    const nexts = ais.map(ai => ({
-      playerID: ai.playerID,
-      event: ai.next()
-    }));
-    const events : Event[] =
-      nexts
-      .filter(r => !r.event.done && r.event.value)
-      .map(r => r.event.value);
-    
-    if(events.length === 0) {
-      clearInterval(aiInterval);
-      aiInterval = null;
-    }
-    else {
-      for (const e of events) {
-        events$.next(e);
-      }
-    }
-  }, Settings.AISpeed);
 }
 
 const onReset = () => {
@@ -209,6 +168,7 @@ socket.on('connection', (client : socketio.Socket) => {
     connectedClients.splice(connectedClients.indexOf(client), 1);
   });
 
+  client.on(MessageType.Register, () => { onRegister(client); });
   client.on(MessageType.Click, onClick);
   client.on(MessageType.Reset, onReset);
 
