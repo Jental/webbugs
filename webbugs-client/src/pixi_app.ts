@@ -105,6 +105,7 @@ export const createPixiApp = (
 
   const drawFn = (field: Field, components: Record<string, Component>, currentPlayerID: string) => {
     console.log('pixi: draw');
+    console.log('pixi: draw: field:', field);
     draw(field, components, viewport, pageRadius, cellOuterRadiusPx, currentPlayerID, onCellClick);
   }
 });

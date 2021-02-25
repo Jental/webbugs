@@ -1,6 +1,6 @@
 import { Observable, fromEvent, from, combineLatest } from 'rxjs';
-import { map, filter, debounceTime, auditTime } from 'rxjs/operators';
-import { io } from 'socket.io-client';
+import { map, filter, auditTime } from 'rxjs/operators';
+import * as io from 'socket.io-client';
 
 import { Field } from '../../webbugs-common/src/models/field';
 import { Component } from '../../webbugs-common/src/models/component';
@@ -26,7 +26,12 @@ const store : Store = {
   components$: null,
 };
 
-const socket = io('http://localhost:5000');
+const socket = io('ws://localhost:5000', { transports: ['websocket'] });
+
+socket.on("connect", () => {
+  console.log('socket connected');
+  socket.emit(MessageType.Register);
+});
 
 let playerID = null;
 
@@ -115,5 +120,3 @@ combineLatest([pixiInit$, store.field$, store.components$, metadataEvent$])
 
   pixiInitData.drawFn(field, components, metadata.playerID);
 });
-
-socket.emit(MessageType.Register);

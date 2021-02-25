@@ -32,7 +32,7 @@ export class Page {
   }
 
   private key(p: Coordinates) : number {
-    return p.x + 4 * this.radius * p.y + 16 * Math.sqrt(this.radius) * p.z;
+    return p.x + 4 * this.radius * p.y + 16 * this.radius**2 * p.z;
   }
 
   incByX(p: Coordinates) : Coordinates {
@@ -98,43 +98,7 @@ export class Page {
   get(p: Coordinates) : Cell {
     return this.grid[this.key(p)];
   }
-
-  isActiveA(p: Coordinates, playerID: string) : boolean {
-    return this.isActive(p, playerID);
-  }
-  isActive(p: Coordinates, playerID: string) : boolean {
-    const cellsToCheck = [p];
-    const checkedCells = [];
-    while (cellsToCheck.length > 0) {
-      const cp = cellsToCheck.pop();
-      const value = this.grid[this.key(cp)];
-      console.log('value', cp, value);
-      
-      if (!value) {
-        continue;
-      }
-      else if (value.type === CellType.Bug && value.playerID === playerID) {
-        return true;
-      }
-      else if (value.type === CellType.Wall && value.playerID === playerID) {
-        const neibhours = this.getNeibhourCoordinates(cp).filter(np => {
-          const v = this.get(np);
-          return v
-            && v.playerID === playerID
-            && checkedCells.findIndex(ccp => ccp.x === np.x && ccp.y === np.y && ccp.z === np.z) < 0;
-        });
-        console.log('neibhours', cp, neibhours);
-        for (let n of neibhours) {
-          cellsToCheck.push(n);
-        }
-      }
-
-      console.log(cellsToCheck);
-    }
-
-    return false;
-  }
-
+  
   set(p: Coordinates, value: Cell) : void {
     if (value) {
       this.grid[this.key(p)] = {

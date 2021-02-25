@@ -1,7 +1,6 @@
-import { type } from 'node:os';
 import { fromEvent, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { io } from 'socket.io-client';
+import io = require('socket.io-client');
 import { ClickContract } from '../webbugs-common/src/contract/click_contract';
 import { DataContract } from '../webbugs-common/src/contract/data_contract';
 import { MessageType } from '../webbugs-common/src/contract/message_type';
@@ -15,7 +14,7 @@ import { createAIByID } from "./ai-types";
 
 const INTERVAL = 1000;
 
-const socket = io('http://localhost:5000');
+const socket = io('ws://localhost:5000', { transports: ['websocket'] });
 
 const metadata$ : Observable<MetadataContract> = fromEvent<MetadataContract>(socket, MessageType.Metadata);
 const data$ : Observable<DataContract> = fromEvent<DataContract>(socket, MessageType.Data);

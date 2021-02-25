@@ -16,8 +16,9 @@ const draw = (field : Field, components: Record<string, Component>, viewport: Vi
   const fieldCenterH = viewport.screenWidth / 2.0;
   const fieldCenterV = viewport.screenHeight / 2.0;
 
-  for (let pp of Object.values(field.coordinates)) {
+  for (let pp of field.coordinates) {
     const page = field.get(pp);
+    console.log("draw: page:", pp, page);
     const cellInnerRadius = cellOuterRadius * Math.sqrt(3) / 2.0;
     // console.log('draw:', page, pageRadius, cellInnerRadius, cellOuterRadius);
     const outerRadius = (pageRadius * 2 - 1) * (cellInnerRadius + 0.5 + CELL_BORDER) + (3 - CELL_BORDER); // last part - emperical fix
