@@ -31,16 +31,16 @@ type CellContract struct {
 
 // PageContract - contract for models.Page
 type PageContract struct {
-	Radius uint                     `json:"radius"`
-	Grid   map[uint64]*CellContract `json:"grid"`
-	P      CoordinatesContract      `json:"p"`
+	Radius uint                    `json:"radius"`
+	Grid   map[int64]*CellContract `json:"grid"`
+	P      CoordinatesContract     `json:"p"`
 }
 
 // FieldContract - contract for models.Field
 type FieldContract struct {
-	PageRadius  uint                    `json:"pageRadius"`
-	Grid        map[uint64]PageContract `json:"grid"`
-	Coordinates []CoordinatesContract   `json:"coordinates"`
+	PageRadius  uint                   `json:"pageRadius"`
+	Grid        map[int64]PageContract `json:"grid"`
+	Coordinates []CoordinatesContract  `json:"coordinates"`
 }
 
 // ComponentContract - contract for models.Component
@@ -96,7 +96,7 @@ func convertCell(cell *models.Cell) CellContract {
 }
 
 func convertPage(page *models.Page) PageContract {
-	grid := make(map[uint64]*CellContract, len(page.Grid))
+	grid := make(map[int64]*CellContract, len(page.Grid))
 	for key, cell := range page.Grid {
 		if cell != nil {
 			ccell := convertCell(cell)
@@ -116,7 +116,7 @@ func convertPage(page *models.Page) PageContract {
 // ConvertField - converts models.Field to contract
 func ConvertField(page *models.Field) FieldContract {
 	count := len(page.Grid)
-	grid := make(map[uint64]PageContract, count)
+	grid := make(map[int64]PageContract, count)
 	coordinates := make([]CoordinatesContract, count)
 	i := 0
 	for key, page := range page.Grid {

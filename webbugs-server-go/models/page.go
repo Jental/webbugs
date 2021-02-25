@@ -11,7 +11,7 @@ import (
 // Page - type for a page
 type Page struct {
 	Radius uint
-	Grid   map[uint64]*Cell
+	Grid   map[int64]*Cell
 	Crd    Coordinates
 }
 
@@ -20,22 +20,22 @@ func NewPage(radius uint, crd Coordinates) Page {
 	newPage := Page{
 		Radius: radius,
 		Crd:    crd,
-		Grid:   make(map[uint64]*Cell),
+		Grid:   make(map[int64]*Cell),
 	}
 
 	for x := -int64(radius) + 1; x < int64(radius)-1; x++ {
 		for y := -int64(radius) + 1; y < int64(radius)-1; y++ {
-			newPage.Grid[key(NewCoordinates(x, y, 0-x-y))] = nil
+			newPage.Grid[newPage.key(NewCoordinates(x, y, 0-x-y))] = nil
 		}
 	}
 
 	return newPage
 }
 
-func (page *Page) key(crd Coordinates) uint64 {
-	return uint64(crd.X) +
-		4*uint64(page.Radius)*uint64(crd.Y) +
-		16*uint64(math.Pow(float64(page.Radius), 2))*uint64(crd.Z)
+func (page *Page) key(crd Coordinates) int64 {
+	return int64(crd.X) +
+		4*int64(page.Radius)*int64(crd.Y) +
+		16*int64(math.Pow(float64(page.Radius), 2))*int64(crd.Z)
 }
 
 func (page *Page) get(crd Coordinates) *Cell {
@@ -47,7 +47,7 @@ func (page *Page) Set(crd FullCoordinates, request *CellSetRequest) error {
 	if request != nil {
 		key := page.key(crd.Cell)
 		cell, exists := page.Grid[key]
-		if exists {
+		if exists && cell != nil {
 			if crd != cell.Crd {
 				return fmt.Errorf("page: set: Unmatching coordinates: %v, %v", crd, cell.Crd)
 			}
