@@ -45,8 +45,8 @@ func (store *Store) processEvent(event *models.Event) processResult {
 		return store.processSetBugEvent(&casted)
 	case models.SetWallEvent:
 		return store.processSetWallEvent(&casted)
-	// case models.EventTypeUpdateComponentActivity:
-	// 	return store.processUpdateComponentActivityEvent((*event).(*models.UpdateComponentActivityEvent))
+	case models.UpdateComponentActivityEvent:
+		return store.processUpdateComponentActivityEvent(&casted)
 	default:
 		return emptyProcessResult
 	}
@@ -188,7 +188,7 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 	allNeighbourWallComponents := make([]*models.Component, 0)
 	for _, n := range neighbours {
 		if n != nil {
-			if n.CellType == models.CellTypeWall && n.PlayerID == event.PlayerID {
+			if n.CellType == models.CellTypeWall {
 				if n.PlayerID == event.PlayerID {
 					alreadyAdded := false
 					for _, onc := range ownNeighbourWallComponents {
@@ -295,6 +295,46 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 		events:  newEvents,
 		updates: newUpdates,
 	}
+}
+
+func (store *Store) processUpdateComponentActivityEvent(event *models.UpdateComponentActivityEvent) processResult {
+	if event.Component == nil || len(event.Component.Walls) == 0 {
+		return emptyProcessResult
+	}
+
+	page := store.field.Get(models.NewCoordinates(0, 0, 0)) // TODO: fix page coordinates
+	if page == nil {
+		return emptyProcessResult
+	}
+
+	playerID := event.Component.Walls[0].PlayerID
+
+	isActive := false
+	for _, w := range event.Component.Walls {
+		for _, n := range page.GetNeibhours(w.Crd.Cell) {
+			if n != nil && n.CellType == models.CellTypeBug && n.PlayerID == playerID {
+				isActive = true
+				break
+			}
+		}
+		if isActive {
+			break
+		}
+	}
+
+	if isActive != event.Component.IsActive {
+		return processResult{
+			events: make([]models.Event, 0),
+			updates: []models.Update{
+				models.NewComponentsUpdate(
+					event.Component.ID,
+					models.ComponentSetRequest{
+						IsActive: &isActive,
+					})},
+		}
+	}
+
+	return emptyProcessResult
 }
 
 func (store *Store) applyUpdates(updates []models.Update) {
