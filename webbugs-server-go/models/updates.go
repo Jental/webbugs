@@ -1,5 +1,7 @@
 package models
 
+import "fmt"
+
 // UpdateType - update type
 type UpdateType uint
 
@@ -13,49 +15,47 @@ const (
 
 // Update - common interface for updates
 type Update interface {
-	GetUpdateType() UpdateType
+	String() string
 }
 
 // FieldUpdate - field update
 type FieldUpdate struct {
-	updateType UpdateType
-	crd        FullCoordinates
-	request    CellSetRequest
+	UpdateType UpdateType
+	Crd        FullCoordinates
+	Request    CellSetRequest
 }
 
 // NewFieldUpdate - creates new field update
 func NewFieldUpdate(crd FullCoordinates, request CellSetRequest) FieldUpdate {
 	return FieldUpdate{
-		updateType: UpdateTypeField,
-		crd:        crd,
-		request:    request,
+		UpdateType: UpdateTypeField,
+		Crd:        crd,
+		Request:    request,
 	}
 }
 
-// GetUpdateType - returns update type
-func (update *FieldUpdate) GetUpdateType() UpdateType {
-	return update.updateType
+func (update FieldUpdate) String() string {
+	return fmt.Sprintf("FieldUpdate:{ %v %v %v }", update.Crd.Page, update.Crd.Cell, update.Request)
 }
 
 // ComponentsUpdate - components update
 type ComponentsUpdate struct {
-	updateType UpdateType
-	id         uint
-	request    ComponentSetRequest
+	UpdateType UpdateType
+	ID         uint
+	Request    ComponentSetRequest
 }
 
 // NewComponentsUpdate - creates new component update
 func NewComponentsUpdate(id uint, request ComponentSetRequest) ComponentsUpdate {
 	return ComponentsUpdate{
-		updateType: UpdateTypeComponents,
-		id:         id,
-		request:    request,
+		UpdateType: UpdateTypeComponents,
+		ID:         id,
+		Request:    request,
 	}
 }
 
-// GetUpdateType - returns update type
-func (update *ComponentsUpdate) GetUpdateType() UpdateType {
-	return update.updateType
+func (update ComponentsUpdate) String() string {
+	return fmt.Sprintf("ComponentsUpdate:{ %v %v }", update.ID, update.Request)
 }
 
 // AddComponentUpdate - add component update
@@ -72,9 +72,8 @@ func NewAddComponentUpdate(component *Component) AddComponentUpdate {
 	}
 }
 
-// GetUpdateType - returns update type
-func (update *AddComponentUpdate) GetUpdateType() UpdateType {
-	return update.updateType
+func (update AddComponentUpdate) String() string {
+	return fmt.Sprintf("AddComponentUpdate:{ %v }", update.component)
 }
 
 // RemoveComponentUpdate - remove component update
@@ -91,7 +90,6 @@ func NewRemoveComponentUpdate(id uint) RemoveComponentUpdate {
 	}
 }
 
-// GetUpdateType - returns update type
-func (update *RemoveComponentUpdate) GetUpdateType() UpdateType {
-	return update.updateType
+func (update RemoveComponentUpdate) String() string {
+	return fmt.Sprintf("RemoveComponentUpdate:{ %v }", update.id)
 }

@@ -1,6 +1,10 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
 
 // EventType - type of an event
 type EventType uint
@@ -15,89 +19,85 @@ const (
 
 // Event - interface for events
 type Event interface {
-	GetType() EventType
+	String() string
 }
 
 // ClickEvent - click event
 type ClickEvent struct {
-	eventType EventType
-	crd       FullCoordinates
-	playerID  uuid.UUID
+	EventType EventType
+	Crd       FullCoordinates
+	PlayerID  uuid.UUID
 }
 
 // NewClickEvent - creates new click event
 func NewClickEvent(crd FullCoordinates, playerID uuid.UUID) ClickEvent {
 	return ClickEvent{
-		eventType: EventTypeClick,
-		crd:       crd,
-		playerID:  playerID,
+		EventType: EventTypeClick,
+		Crd:       crd,
+		PlayerID:  playerID,
 	}
 }
 
-// GetType - returns event type
-func (event *ClickEvent) GetType() EventType {
-	return event.eventType
+func (event ClickEvent) String() string {
+	return fmt.Sprintf("ClickEvent:{ %v %v %v }", event.Crd.Page, event.Crd.Cell, event.PlayerID)
 }
 
 // SetBugEvent - set bug event
 type SetBugEvent struct {
-	eventType EventType
-	crd       FullCoordinates
-	playerID  uuid.UUID
-	isBase    bool
+	EventType EventType
+	Crd       FullCoordinates
+	PlayerID  uuid.UUID
+	IsBase    bool
 }
 
 // NewSetBugEvent - creates new set bug event
 func NewSetBugEvent(crd FullCoordinates, playerID uuid.UUID, isBase bool) SetBugEvent {
 	return SetBugEvent{
-		eventType: EventTypeSetBug,
-		crd:       crd,
-		playerID:  playerID,
-		isBase:    isBase,
+		EventType: EventTypeSetBug,
+		Crd:       crd,
+		PlayerID:  playerID,
+		IsBase:    isBase,
 	}
 }
 
-// GetType - returns event type
-func (event *SetBugEvent) GetType() EventType {
-	return event.eventType
+func (event SetBugEvent) String() string {
+	return fmt.Sprintf("SetBugEvent:{ %v %v %v %v }", event.Crd.Page, event.Crd.Cell, event.PlayerID, event.IsBase)
 }
 
 // SetWallEvent - set wall event
 type SetWallEvent struct {
-	eventType EventType
-	crd       FullCoordinates
-	playerID  uuid.UUID
+	EventType EventType
+	Crd       FullCoordinates
+	PlayerID  uuid.UUID
 }
 
 // NewSetWallEvent - creates new set wall event
 func NewSetWallEvent(crd FullCoordinates, playerID uuid.UUID) SetWallEvent {
 	return SetWallEvent{
-		eventType: EventTypeSetWall,
-		crd:       crd,
-		playerID:  playerID,
+		EventType: EventTypeSetWall,
+		Crd:       crd,
+		PlayerID:  playerID,
 	}
 }
 
-// GetType - returns event type
-func (event *SetWallEvent) GetType() EventType {
-	return event.eventType
+func (event SetWallEvent) String() string {
+	return fmt.Sprintf("SetWallEvent:{ %v %v %v }", event.Crd.Page, event.Crd.Cell, event.PlayerID)
 }
 
 // UpdateComponentActivityEvent - update component activity event. component activity should be updated based on current field state
 type UpdateComponentActivityEvent struct {
-	eventType EventType
-	component *Component
+	EventType EventType
+	Component *Component
 }
 
 // NewUpdateComponentActivityEvent - creates new click event
 func NewUpdateComponentActivityEvent(component *Component) UpdateComponentActivityEvent {
 	return UpdateComponentActivityEvent{
-		eventType: EventTypeUpdateComponentActivity,
-		component: component,
+		EventType: EventTypeUpdateComponentActivity,
+		Component: component,
 	}
 }
 
-// GetType - returns event type
-func (event *UpdateComponentActivityEvent) GetType() EventType {
-	return event.eventType
+func (event UpdateComponentActivityEvent) String() string {
+	return fmt.Sprintf("UpdateComponentActivityEvent:{ %v }", event.Component.ID)
 }

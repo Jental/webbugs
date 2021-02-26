@@ -12,58 +12,22 @@ import (
 )
 
 const port = ":5000"
+const pageRadius = 10
 
 var connectedClientCount uint = 0
-var players []models.PlayerInfo = make([]models.PlayerInfo, 0)
-var field models.Field
-var components = make(map[uint]*models.Component)
-
-func reCreateField() {
-	var pageRadius uint = 10
-	field = models.NewField(pageRadius)
-	components = make(map[uint]*models.Component)
-
-	pageCrd := models.NewCoordinates(0, 0, 0)
-
-	for _, player := range players {
-		c := make(chan models.Coordinates)
-		go field.Get(pageCrd).GetRandomEmptyCellCoordinates(c)
-		crd := <-c
-		// event := models.NewSetBugEvent(
-		// 	models.FullCoordinates{
-		// 		page: pageCrd,
-		// 		cell: crd,
-		// 	},
-		// 	playerID,
-		// 	true)
-		// TODO: apply event instead of set
-		cellType := models.CellTypeBug
-		isBase := true
-		field.Get(pageCrd).Set(
-			models.FullCoordinates{
-				Page: pageCrd,
-				Cell: crd,
-			},
-			&models.CellSetRequest{
-				CellType:  &cellType,
-				PlayerID:  player.ID,
-				Component: nil,
-				IsBase:    &isBase,
-			})
-	}
-}
+var store Store = NewStore(pageRadius)
 
 func onRegister(c *gosocketio.Channel) {
 	newPlayerID := uuid.New()
 	log.Printf("new player id: %v", newPlayerID)
-	players = append(players, models.PlayerInfo{
+	store.players = append(store.players, models.PlayerInfo{
 		ID:     newPlayerID,
 		Name:   newPlayerID.String(),
 		Client: c,
 	})
 
-	allPlayerIDs := make([]uuid.UUID, len(players))
-	for i, player := range players {
+	allPlayerIDs := make([]uuid.UUID, len(store.players))
+	for i, player := range store.players {
 		allPlayerIDs[i] = player.ID
 	}
 
@@ -74,44 +38,42 @@ func onRegister(c *gosocketio.Channel) {
 
 	pageCrd := models.NewCoordinates(0, 0, 0)
 	cc := make(chan models.Coordinates)
-	go field.Get(pageCrd).GetRandomEmptyCellCoordinates(cc)
+	go store.field.Get(pageCrd).GetRandomEmptyCellCoordinates(cc)
 	crd := <-cc
 	log.Printf("Setting a base at cell %v", crd)
-	// event := models.NewSetBugEvent(
-	// 	models.FullCoordinates{
-	// 		page: pageCrd,
-	// 		cell: crd,
-	// 	},
-	// 	playerID,
-	// 	true)
-	// TODO: apply event instead of set
-	cellType := models.CellTypeBug
-	isBase := true
-	err := field.Get(pageCrd).Set(
+	var event models.Event = models.NewSetBugEvent(
 		models.FullCoordinates{
 			Page: pageCrd,
 			Cell: crd,
 		},
-		&models.CellSetRequest{
-			CellType:  &cellType,
-			PlayerID:  newPlayerID,
-			Component: nil,
-			IsBase:    &isBase,
+		newPlayerID,
+		true)
+	store.Handle(&event)
+}
+
+func onClick(c *gosocketio.Channel, data contract.ClickContract) {
+	event := models.NewClickEvent(
+		models.FullCoordinates{
+			Page: models.NewCoordinates(data.Crd.Page.X, data.Crd.Page.Y, data.Crd.Page.Z),
+			Cell: models.NewCoordinates(data.Crd.Cell.X, data.Crd.Cell.Y, data.Crd.Cell.Z),
+		},
+		data.PlayerID)
+	event2 := models.Event(event)
+	store.Handle(&event2)
+}
+
+func onStoreUpdate() {
+	for _, player := range store.players {
+		player.Client.Emit(string(contract.DataMessageType), contract.DataContract{
+			Field:      contract.ConvertField(store.field),
+			Components: make(map[uint]contract.ComponentContract, 0),
 		})
-	if err != nil {
-		log.Printf("Error. Failed to set a cell: %v", err)
 	}
-
-	log.Printf("field len: %d", len(field.Grid))
-
-	c.Emit(string(contract.DataMessageType), contract.DataContract{
-		Field:      contract.ConvertField(&field),
-		Components: make(map[uint]contract.ComponentContract, 0),
-	})
 }
 
 func main() {
-	reCreateField()
+	store.subscribtions = append(store.subscribtions, onStoreUpdate)
+	store.Start()
 
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 
@@ -134,8 +96,8 @@ func main() {
 		onRegister(c)
 	})
 
-	server.On(string(contract.ClickMessageType), func(c *gosocketio.Channel) {
-		log.Printf("click: %v", c.Ip())
+	server.On(string(contract.ClickMessageType), func(c *gosocketio.Channel, data contract.ClickContract) {
+		onClick(c, data)
 	})
 
 	server.On(string(contract.ResetMessageType), func(c *gosocketio.Channel) {

@@ -38,7 +38,8 @@ func (page *Page) key(crd Coordinates) int64 {
 		16*int64(math.Pow(float64(page.Radius), 2))*int64(crd.Z)
 }
 
-func (page *Page) get(crd Coordinates) *Cell {
+// Get - retrieves a cell
+func (page *Page) Get(crd Coordinates) *Cell {
 	return page.Grid[page.key(crd)]
 }
 
@@ -139,7 +140,7 @@ func (page *Page) GetNeibhours(crd Coordinates) []*Cell {
 	result := make([]*Cell, len(crds))
 
 	for i, crd2 := range crds {
-		result[i] = page.get(crd2)
+		result[i] = page.Get(crd2)
 	}
 
 	return result
