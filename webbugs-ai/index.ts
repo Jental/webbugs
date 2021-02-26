@@ -32,9 +32,12 @@ const players = playerTypeNames.map(name => ({
   ai: null
 }));
 
-for (const name of playerTypeNames) {
-  socket.emit(MessageType.Register);
-}
+socket.on("connect", () => {
+  console.log('connected');
+  for (const name of playerTypeNames) {
+    socket.emit(MessageType.Register);
+  }
+});
 
 metadata$
 .subscribe((metadata) => {
