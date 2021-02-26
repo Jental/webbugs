@@ -55,7 +55,18 @@ func NewComponentsUpdate(id uint, request ComponentSetRequest) ComponentsUpdate 
 }
 
 func (update ComponentsUpdate) String() string {
-	return fmt.Sprintf("ComponentsUpdate:{ %v %v }", update.ID, update.Request)
+	var isActiveStr string
+	if update.Request.IsActive == nil {
+		isActiveStr = "nil"
+	} else {
+		if *update.Request.IsActive {
+			isActiveStr = "true"
+		} else {
+			isActiveStr = "false"
+		}
+	}
+
+	return fmt.Sprintf("ComponentsUpdate:{ %v %v [len:%v] }", update.ID, isActiveStr, len(update.Request.Walls))
 }
 
 // AddComponentUpdate - add component update

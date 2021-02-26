@@ -1,6 +1,9 @@
 package main
 
-import "webbugs-server/models"
+import (
+	"sync"
+	"webbugs-server/models"
+)
 
 // Store - stores all app data
 type Store struct {
@@ -9,6 +12,7 @@ type Store struct {
 	players       []models.PlayerInfo
 	subscribtions []func()
 	eventQueue    chan *models.Event
+	updateMutex   sync.Mutex
 }
 
 // NewStore - creates a new store

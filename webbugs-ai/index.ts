@@ -41,6 +41,7 @@ socket.on("connect", () => {
 
 metadata$
 .subscribe((metadata) => {
+  console.log('metadata', metadata);
   const isNewPlayer = playerIDs.indexOf(metadata.playerID) < 0;
   if (isNewPlayer) {
     const playerInfo = players.find(p => p.playerID === null);

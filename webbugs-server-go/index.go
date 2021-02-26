@@ -14,7 +14,7 @@ import (
 )
 
 const port = ":5000"
-const pageRadius = 10
+const pageRadius = 30
 
 var connectedClientCount uint = 0
 var store Store = NewStore(pageRadius)

@@ -25,7 +25,9 @@ func (store *Store) Start() {
 			go func() {
 				result := store.processEvent(event)
 
+				store.updateMutex.Lock()
 				store.applyUpdates(result.updates)
+				store.updateMutex.Unlock()
 
 				for _, event := range result.events {
 					store.eventQueue <- &event
