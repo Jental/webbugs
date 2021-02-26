@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 	"webbugs-server/contract"
 	"webbugs-server/models"
 
@@ -72,6 +74,8 @@ func onStoreUpdate() {
 }
 
 func main() {
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	store.subscribtions = append(store.subscribtions, onStoreUpdate)
 	store.Start()
 
