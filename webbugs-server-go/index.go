@@ -66,7 +66,7 @@ func onStoreUpdate() {
 	for _, player := range store.players {
 		player.Client.Emit(string(contract.DataMessageType), contract.DataContract{
 			Field:      contract.ConvertField(store.field),
-			Components: make(map[uint]contract.ComponentContract, 0),
+			Components: contract.ConvertComponents(store.components),
 		})
 	}
 }

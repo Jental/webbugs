@@ -131,3 +131,19 @@ func ConvertField(page *models.Field) FieldContract {
 		Coordinates: coordinates,
 	}
 }
+
+// ConvertComponents - converts components to contract
+func ConvertComponents(components map[uint]*models.Component) map[uint]ComponentContract {
+	result := make(map[uint]ComponentContract, len(components))
+
+	for i, c := range components {
+
+		result[i] = ComponentContract{
+			ID:       strconv.Itoa(int(c.ID)),
+			IsActive: c.IsActive,
+			WallIDs:  []uint{},
+		}
+	}
+
+	return result
+}
