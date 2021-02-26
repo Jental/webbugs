@@ -60,36 +60,36 @@ func (update ComponentsUpdate) String() string {
 
 // AddComponentUpdate - add component update
 type AddComponentUpdate struct {
-	updateType UpdateType
-	component  *Component
+	UpdateType UpdateType
+	Component  *Component
 }
 
 // NewAddComponentUpdate - creates new add component update
 func NewAddComponentUpdate(component *Component) AddComponentUpdate {
 	return AddComponentUpdate{
-		updateType: UpdateTypeAddComponent,
-		component:  component,
+		UpdateType: UpdateTypeAddComponent,
+		Component:  component,
 	}
 }
 
 func (update AddComponentUpdate) String() string {
-	return fmt.Sprintf("AddComponentUpdate:{ %v }", update.component)
+	return fmt.Sprintf("AddComponentUpdate:{ %v }", update.Component)
 }
 
 // RemoveComponentUpdate - remove component update
 type RemoveComponentUpdate struct {
-	updateType UpdateType
-	id         uint
+	UpdateType UpdateType
+	ID         uint
 }
 
 // NewRemoveComponentUpdate - creates new add component update
 func NewRemoveComponentUpdate(id uint) RemoveComponentUpdate {
 	return RemoveComponentUpdate{
-		updateType: UpdateTypeRemoveComponent,
-		id:         id,
+		UpdateType: UpdateTypeRemoveComponent,
+		ID:         id,
 	}
 }
 
 func (update RemoveComponentUpdate) String() string {
-	return fmt.Sprintf("RemoveComponentUpdate:{ %v }", update.id)
+	return fmt.Sprintf("RemoveComponentUpdate:{ %v }", update.ID)
 }

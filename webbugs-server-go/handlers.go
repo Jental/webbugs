@@ -302,12 +302,12 @@ func (store *Store) applyUpdates(updates []models.Update) {
 		switch casted := update.(type) {
 		case models.FieldUpdate:
 			store.applyFieldUpdate(&casted)
-			// case models.UpdateTypeComponents:
-			// 	this.applyComponentsUpdate(update as ComponentsUpdate);
-			// case models.UpdateTypeAddComponent:
-			// 	this.applyAddComponentUpdate(update as AddComponentUdpate);
-			// case models.UpdateTypeRemoveComponent:
-			// 	this.applyRemoveComponentUpdate(update as RemoveComponentUpdate);
+		case models.ComponentsUpdate:
+			store.applyComponentsUpdate(&casted)
+		case models.AddComponentUpdate:
+			store.applyAddComponentUpdate(&casted)
+		case models.RemoveComponentUpdate:
+			store.applyRemoveComponentUpdate(&casted)
 		}
 	}
 
@@ -324,4 +324,40 @@ func (store *Store) applyFieldUpdate(update *models.FieldUpdate) {
 	if page != nil {
 		page.Set(update.Crd, &update.Request)
 	}
+}
+
+func (store *Store) applyComponentsUpdate(update *models.ComponentsUpdate) {
+	if update == nil {
+		return
+	}
+
+	component, ok := store.components[update.ID]
+	if !ok {
+		return
+	}
+
+	log.Printf("events: update: component: %v", update)
+
+	if update.Request.Walls != nil {
+		component.Walls = update.Request.Walls
+	}
+	if update.Request.IsActive != nil {
+		component.IsActive = *update.Request.IsActive
+	}
+}
+
+func (store *Store) applyAddComponentUpdate(update *models.AddComponentUpdate) {
+	_, ok := store.components[update.Component.ID]
+	if ok {
+		return
+	}
+
+	log.Printf("events: update: add component: %v", update)
+
+	store.components[update.Component.ID] = update.Component
+}
+
+func (store *Store) applyRemoveComponentUpdate(update *models.RemoveComponentUpdate) {
+	log.Printf("events: update: remove component: %v", update)
+	delete(store.components, update.ID)
 }
