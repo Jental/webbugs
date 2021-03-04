@@ -15,6 +15,7 @@ const (
 	EventTypeSetBug                  EventType = 2
 	EventTypeSetWall                 EventType = 3
 	EventTypeUpdateComponentActivity EventType = 4
+	EventTypeClearCell               EventType = 5
 )
 
 // Event - interface for events
@@ -100,4 +101,22 @@ func NewUpdateComponentActivityEvent(component *Component) UpdateComponentActivi
 
 func (event UpdateComponentActivityEvent) String() string {
 	return fmt.Sprintf("UpdateComponentActivityEvent:{ %v }", event.Component.ID)
+}
+
+// ClearCellsEvent - cell clear event
+type ClearCellsEvent struct {
+	EventType EventType
+	Crd       []FullCoordinates
+}
+
+// NewClearCellsEvent - creates new clear cell event
+func NewClearCellsEvent(crd []FullCoordinates) ClearCellsEvent {
+	return ClearCellsEvent{
+		EventType: EventTypeClearCell,
+		Crd:       crd,
+	}
+}
+
+func (event ClearCellsEvent) String() string {
+	return fmt.Sprintf("ClearCellEvent:{ %v }", event.Crd)
 }

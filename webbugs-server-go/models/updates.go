@@ -22,11 +22,11 @@ type Update interface {
 type FieldUpdate struct {
 	UpdateType UpdateType
 	Crd        FullCoordinates
-	Request    CellSetRequest
+	Request    *CellSetRequest
 }
 
 // NewFieldUpdate - creates new field update
-func NewFieldUpdate(crd FullCoordinates, request CellSetRequest) FieldUpdate {
+func NewFieldUpdate(crd FullCoordinates, request *CellSetRequest) FieldUpdate {
 	return FieldUpdate{
 		UpdateType: UpdateTypeField,
 		Crd:        crd,

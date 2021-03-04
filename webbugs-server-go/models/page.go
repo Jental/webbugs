@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"sync"
 
 	"github.com/google/uuid"
 )
@@ -11,21 +12,22 @@ import (
 // Page - type for a page
 type Page struct {
 	Radius uint
-	Grid   map[int64]*Cell
+	Grid   *sync.Map
 	Crd    Coordinates
 }
 
 // NewPage - creates new page
 func NewPage(radius uint, crd Coordinates) Page {
+	var grid sync.Map
 	newPage := Page{
 		Radius: radius,
 		Crd:    crd,
-		Grid:   make(map[int64]*Cell),
+		Grid:   &grid,
 	}
 
 	for x := -int64(radius) + 1; x < int64(radius)-1; x++ {
 		for y := -int64(radius) + 1; y < int64(radius)-1; y++ {
-			newPage.Grid[newPage.key(NewCoordinates(x, y, 0-x-y))] = nil
+			newPage.Grid.Store(newPage.key(NewCoordinates(x, y, 0-x-y)), nil)
 		}
 	}
 
@@ -40,15 +42,21 @@ func (page *Page) key(crd Coordinates) int64 {
 
 // Get - retrieves a cell
 func (page *Page) Get(crd Coordinates) *Cell {
-	return page.Grid[page.key(crd)]
+	cell, ok := page.Grid.Load(page.key(crd))
+	if ok && cell != nil {
+		return cell.(*Cell)
+	}
+
+	return nil
 }
 
 // Set - sets or updates a cell
 func (page *Page) Set(crd FullCoordinates, request *CellSetRequest) error {
 	if request != nil {
 		key := page.key(crd.Cell)
-		cell, exists := page.Grid[key]
-		if exists && cell != nil {
+		celli, exists := page.Grid.Load(key)
+		if exists && celli != nil {
+			cell := celli.(*Cell)
 			if crd != cell.Crd {
 				return fmt.Errorf("page: set: Unmatching coordinates: %v, %v", crd, cell.Crd)
 			}
@@ -56,11 +64,11 @@ func (page *Page) Set(crd FullCoordinates, request *CellSetRequest) error {
 			cell.FillWithCellSetRequest(*request)
 		} else {
 			newCell := FromCellSetRequest(*request, crd)
-			page.Grid[key] = &newCell
+			page.Grid.Store(key, &newCell)
 		}
 	} else {
 		key := page.key(crd.Cell)
-		page.Grid[key] = nil
+		page.Grid.Store(key, nil)
 	}
 
 	return nil
@@ -161,7 +169,7 @@ func (page *Page) GetRandomEmptyCellCoordinates(result chan Coordinates) {
 		}
 
 		key := page.key(p)
-		cell, exists := page.Grid[key]
+		cell, exists := page.Grid.Load(key)
 		if !exists || cell == nil {
 			result <- p
 			break
@@ -172,11 +180,16 @@ func (page *Page) GetRandomEmptyCellCoordinates(result chan Coordinates) {
 // GetPlayerCells - retrieves all player cells
 func (page *Page) GetPlayerCells(playerID uuid.UUID) []*Cell {
 	result := make([]*Cell, 0)
-	for _, cell := range page.Grid {
-		if cell != nil && cell.PlayerID == playerID {
-			result = append(result, cell)
+	page.Grid.Range(func(key interface{}, celli interface{}) bool {
+		if celli != nil {
+			cell := celli.(*Cell)
+			if cell.PlayerID == playerID {
+				result = append(result, cell)
+			}
 		}
-	}
+		return true
+	})
+
 	return result
 }
 

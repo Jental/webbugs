@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 	"webbugs-server/contract"
 	"webbugs-server/models"
@@ -14,7 +16,7 @@ import (
 )
 
 const port = ":5000"
-const pageRadius = 30
+const pageRadius = 10
 
 var connectedClientCount uint = 0
 var store Store = NewStore(pageRadius)
@@ -22,15 +24,18 @@ var store Store = NewStore(pageRadius)
 func onRegister(c *gosocketio.Channel) {
 	newPlayerID := uuid.New()
 	log.Printf("new player id: %v", newPlayerID)
-	store.players = append(store.players, models.PlayerInfo{
-		ID:     newPlayerID,
-		Name:   newPlayerID.String(),
-		Client: c,
-	})
+	store.players[newPlayerID] = &models.PlayerInfo{
+		ID:           newPlayerID,
+		Name:         newPlayerID.String(),
+		Client:       c,
+		LastActivity: time.Now().UTC(),
+	}
 
 	allPlayerIDs := make([]uuid.UUID, len(store.players))
-	for i, player := range store.players {
+	i := 0
+	for _, player := range store.players {
 		allPlayerIDs[i] = player.ID
+		i = i + 1
 	}
 
 	c.Emit(string(contract.MetadataMessageType), contract.MetadataContract{
@@ -53,7 +58,14 @@ func onRegister(c *gosocketio.Channel) {
 	store.Handle(&event)
 }
 
-func onClick(c *gosocketio.Channel, data contract.ClickContract) {
+func onClick(data contract.ClickContract) {
+	player, exists := store.players[data.PlayerID]
+	if !exists {
+		return
+	}
+
+	player.LastActivity = time.Now().UTC()
+
 	event := models.NewClickEvent(
 		models.FullCoordinates{
 			Page: models.NewCoordinates(data.Crd.Page.X, data.Crd.Page.Y, data.Crd.Page.Z),
@@ -66,18 +78,38 @@ func onClick(c *gosocketio.Channel, data contract.ClickContract) {
 
 func onStoreUpdate() {
 	for _, player := range store.players {
-		player.Client.Emit(string(contract.DataMessageType), contract.DataContract{
-			Field:      contract.ConvertField(store.field),
-			Components: contract.ConvertComponents(store.components),
-		})
+		if player.Client != nil {
+			player.Client.Emit(string(contract.DataMessageType), contract.DataContract{
+				Field:      contract.ConvertField(store.field),
+				Components: contract.ConvertComponents(store.components),
+			})
+		}
 	}
 }
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	var savedGameToLoad string
+	flag.StringVar(&savedGameToLoad, "l", "", "Specify a saved game file")
+	flag.Parse()
+	if savedGameToLoad != "" {
+		log.Printf("Loading game: %v", savedGameToLoad)
+		LoadSave(savedGameToLoad, &store)
+	} else {
+		log.Print("No game loaded. Epmty field will be used")
+	}
+
+	f, err := os.OpenFile("out.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+	// log.SetOutput(f)
+
 	store.subscribtions = append(store.subscribtions, onStoreUpdate)
 	store.Start()
+	// store.StartWallRemover()
 
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 
@@ -101,7 +133,7 @@ func main() {
 	})
 
 	server.On(string(contract.ClickMessageType), func(c *gosocketio.Channel, data contract.ClickContract) {
-		onClick(c, data)
+		onClick(data)
 	})
 
 	server.On(string(contract.ResetMessageType), func(c *gosocketio.Channel) {

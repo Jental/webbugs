@@ -113,7 +113,7 @@ metadataEvent$.subscribe((data) => {
 // pixiInit$.subscribe(() => { console.log('pixi initialized'); });
 
 combineLatest([pixiInit$, store.field$, store.components$, metadataEvent$])
-.pipe(auditTime(500))
+.pipe(auditTime(50))
 .subscribe(([pixiInitData, field, components, metadata]) => {
   // @ts-ignore
   window.field = field; window.components = components;

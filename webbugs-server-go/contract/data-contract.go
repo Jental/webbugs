@@ -45,9 +45,9 @@ type FieldContract struct {
 
 // ComponentContract - contract for models.Component
 type ComponentContract struct {
-	ID       string `json:"id"`
-	IsActive bool   `json:"isActive"`
-	WallIDs  []uint `json:"wall_ids"`
+	ID       string                    `json:"id"`
+	IsActive bool                      `json:"isActive"`
+	WallIDs  []FullCoordinatesContract `json:"wall_ids"`
 }
 
 // DataContract - contract for field data
@@ -96,15 +96,17 @@ func convertCell(cell *models.Cell) CellContract {
 }
 
 func convertPage(page *models.Page) PageContract {
-	grid := make(map[int64]*CellContract, len(page.Grid))
-	for key, cell := range page.Grid {
+	grid := make(map[int64]*CellContract)
+	page.Grid.Range(func(key interface{}, cell interface{}) bool {
 		if cell != nil {
-			ccell := convertCell(cell)
-			grid[key] = &ccell
+			ccell := convertCell(cell.(*models.Cell))
+			grid[key.(int64)] = &ccell
 		} else {
-			grid[key] = nil
+			grid[key.(int64)] = nil
 		}
-	}
+
+		return true
+	})
 
 	return PageContract{
 		Radius: page.Radius,
@@ -115,15 +117,14 @@ func convertPage(page *models.Page) PageContract {
 
 // ConvertField - converts models.Field to contract
 func ConvertField(page *models.Field) FieldContract {
-	count := len(page.Grid)
-	grid := make(map[int64]PageContract, count)
-	coordinates := make([]CoordinatesContract, count)
-	i := 0
-	for key, page := range page.Grid {
-		converted := convertPage(page)
-		grid[key] = converted
-		coordinates[i] = converted.P
-	}
+	grid := make(map[int64]PageContract)
+	coordinates := make([]CoordinatesContract, 0)
+	page.Grid.Range(func(key interface{}, page interface{}) bool {
+		converted := convertPage(page.(*models.Page))
+		grid[key.(int64)] = converted
+		coordinates = append(coordinates, converted.P)
+		return true
+	})
 
 	return FieldContract{
 		PageRadius:  page.PageRadius,
@@ -137,11 +138,15 @@ func ConvertComponents(components map[uint]*models.Component) map[uint]Component
 	result := make(map[uint]ComponentContract, len(components))
 
 	for i, c := range components {
+		wallIDs := make([]FullCoordinatesContract, len(c.Walls))
+		for j, w := range c.Walls {
+			wallIDs[j] = convertFullCoordinates(&w.Crd)
+		}
 
 		result[i] = ComponentContract{
 			ID:       strconv.Itoa(int(c.ID)),
 			IsActive: c.IsActive,
-			WallIDs:  []uint{},
+			WallIDs:  wallIDs,
 		}
 	}
 

@@ -1,3 +1,4 @@
+import _ = require('lodash');
 import { fromEvent, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import io = require('socket.io-client');
@@ -9,7 +10,6 @@ import { MetadataContract } from '../webbugs-common/src/contract/metadata_contra
 import { Component } from "../webbugs-common/src/models/component";
 import { Field } from "../webbugs-common/src/models/field";
 
-import { AI } from "./ai";
 import { createAIByID } from "./ai-types";
 
 const INTERVAL = 1000;
@@ -17,7 +17,29 @@ const INTERVAL = 1000;
 const socket = io('ws://localhost:5000', { transports: ['websocket'] });
 
 const metadata$ : Observable<MetadataContract> = fromEvent<MetadataContract>(socket, MessageType.Metadata);
-const data$ : Observable<DataContract> = fromEvent<DataContract>(socket, MessageType.Data);
+const data$ : Observable<DataContract> =
+  fromEvent<DataContract>(socket, MessageType.Data)
+  .pipe(
+    map(data => {
+      if (data.field) {
+        const field = Field.fromObject(data.field)
+        return {
+          field: field,
+          components: _.mapValues(data.components, (c) => ({
+            id: c.id,
+            isActive: c.isActive,
+            walls: c.wall_ids.map(crd => field.get(crd.page).get(crd.cell))
+          }))
+        }
+      }
+      else {
+        return {
+          field: null,
+          components: {}
+        };
+      }
+    })
+  );
 const field$ : Observable<Field> = data$.pipe(map(d => d.field));
 const components$ : Observable<Record<string, Component>> = data$.pipe(map(d => d.components));
 
@@ -60,11 +82,12 @@ metadata$
           
           if (next.done) {
             clearInterval(interval);
+            console.log('game over', playerInfo.playerID);
           }
           else {
             const data: ClickContract = next.value;
-            console.log(data);
             if (data) {
+              // console.log(data.playerID, data.p.cell);
               socket.emit(MessageType.Click, data);
             }
           }

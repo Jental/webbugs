@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -20,6 +22,7 @@ type Cell struct {
 	Crd       FullCoordinates
 	Component *Component
 	IsBase    bool
+	CreatedAt time.Time
 }
 
 // NewBugCell - creates a new cell of the bug type
@@ -30,6 +33,7 @@ func NewBugCell(playerID uuid.UUID, crd FullCoordinates, isBase bool) Cell {
 		Crd:       crd,
 		Component: nil,
 		IsBase:    isBase,
+		CreatedAt: time.Now().UTC(),
 	}
 }
 
@@ -41,6 +45,7 @@ func NewWallCell(playerID uuid.UUID, crd FullCoordinates, component *Component) 
 		Component: component,
 		Crd:       crd,
 		IsBase:    false,
+		CreatedAt: time.Now().UTC(),
 	}
 }
 

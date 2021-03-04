@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"runtime"
 	"webbugs-server/models"
 )
 
@@ -19,20 +20,24 @@ func (store *Store) Handle(event *models.Event) {
 
 // Start - starts event hadling process
 func (store *Store) Start() {
+	locker := NewLocker(store.field.PageRadius)
 	go func() {
 		for {
 			event := <-store.eventQueue
-			go func() {
-				result := store.processEvent(event)
+			if !store.isLocked {
+				go func() {
+					result := store.processEvent(event)
 
-				store.updateMutex.Lock()
-				store.applyUpdates(result.updates)
-				store.updateMutex.Unlock()
+					lockerKeys := locker.LockForUpdates(result.updates)
+					store.applyUpdates(result.updates)
+					locker.UnlockForKeys(lockerKeys)
 
-				for _, event := range result.events {
-					store.eventQueue <- &event
-				}
-			}()
+					for _, event := range result.events {
+						store.eventQueue <- &event
+					}
+				}()
+			}
+			log.Printf("Number of goroutines: %d", runtime.NumGoroutine())
 		}
 	}()
 }
@@ -49,6 +54,8 @@ func (store *Store) processEvent(event *models.Event) processResult {
 		return store.processSetWallEvent(&casted)
 	case models.UpdateComponentActivityEvent:
 		return store.processUpdateComponentActivityEvent(&casted)
+	case models.ClearCellsEvent:
+		return store.processClearCellEvent(&casted)
 	default:
 		return emptyProcessResult
 	}
@@ -68,13 +75,13 @@ func (store *Store) processClickEvent(event *models.ClickEvent) processResult {
 		for _, n := range neighbours {
 			if n != nil && n.PlayerID == event.PlayerID {
 				if n.CellType == models.CellTypeBug {
-					log.Printf("events: processClickEvent: active neighbour: bug: %v", *n)
+					// log.Printf("events: processClickEvent: active neighbour: bug: %v", *n)
 					isActiveNeighbourPresent = true
 					break
 				}
 
 				if n.CellType == models.CellTypeWall && n.Component != nil && n.Component.IsActive {
-					log.Printf("events: processClickEvent: active neighbour: wall: %v %v", *n, *n.Component)
+					// log.Printf("events: processClickEvent: active neighbour: wall: %v %v", *n, *n.Component)
 					isActiveNeighbourPresent = true
 					break
 				}
@@ -150,7 +157,7 @@ func (store *Store) processSetBugEvent(event *models.SetBugEvent) processResult 
 		}
 	}
 
-	log.Printf("events: processSetBugEvent: ownNeighbourWallComponents: %v", len(ownNeighbourWallComponents))
+	// log.Printf("events: processSetBugEvent: ownNeighbourWallComponents: %v", len(ownNeighbourWallComponents))
 
 	for _, cmp := range ownNeighbourWallComponents {
 		isActive := true
@@ -158,7 +165,7 @@ func (store *Store) processSetBugEvent(event *models.SetBugEvent) processResult 
 	}
 
 	cellType := models.CellTypeBug
-	newUpdates = append(newUpdates, models.NewFieldUpdate(event.Crd, models.CellSetRequest{
+	newUpdates = append(newUpdates, models.NewFieldUpdate(event.Crd, &models.CellSetRequest{
 		CellType: &cellType,
 		PlayerID: event.PlayerID,
 		IsBase:   &event.IsBase,
@@ -223,9 +230,9 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 			}
 		}
 	}
-	log.Printf("events: processSetWallEvent: ownNeighbourWallComponents: %v", len(ownNeighbourWallComponents))
-	log.Printf("events: processSetWallEvent: ownNeighbourBugs: %v", len(ownNeighbourBugs))
-	log.Printf("events: processSetWallEvent: allNeighbourWallComponents: %v", len(allNeighbourWallComponents))
+	// log.Printf("events: processSetWallEvent: ownNeighbourWallComponents: %v", len(ownNeighbourWallComponents))
+	// log.Printf("events: processSetWallEvent: ownNeighbourBugs: %v", len(ownNeighbourBugs))
+	// log.Printf("events: processSetWallEvent: allNeighbourWallComponents: %v", len(allNeighbourWallComponents))
 
 	if len(ownNeighbourWallComponents) == 0 {
 		newComponent := models.NewComponent(
@@ -270,7 +277,7 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 		for _, w := range allWalls {
 			newUpdates = append(newUpdates, models.NewFieldUpdate(
 				w.Crd,
-				models.CellSetRequest{
+				&models.CellSetRequest{
 					Component: &newComponent,
 				}))
 		}
@@ -287,7 +294,7 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 	}
 
 	cellType := models.CellTypeWall
-	newUpdates = append(newUpdates, models.NewFieldUpdate(event.Crd, models.CellSetRequest{
+	newUpdates = append(newUpdates, models.NewFieldUpdate(event.Crd, &models.CellSetRequest{
 		CellType:  &cellType,
 		Component: component,
 		PlayerID:  event.PlayerID,
@@ -339,6 +346,65 @@ func (store *Store) processUpdateComponentActivityEvent(event *models.UpdateComp
 	return emptyProcessResult
 }
 
+func (store *Store) processClearCellEvent(event *models.ClearCellsEvent) processResult {
+	newEvents := make([]models.Event, 0)
+	newUpdates := make([]models.Update, 0)
+
+	componentsToBeUpdated := make(map[*models.Component][]*models.Cell)
+
+	for _, crd := range event.Crd {
+		page := store.field.Get(crd.Page) // TODO: fix page coordinates
+		if page == nil {
+			continue
+		}
+		cell := page.Get(crd.Cell)
+		if cell == nil {
+			continue
+		}
+
+		newUpdates = append(newUpdates, models.NewFieldUpdate(crd, nil))
+
+		if cell.CellType == models.CellTypeWall {
+			component := cell.Component
+
+			entry, exists := componentsToBeUpdated[component]
+			if exists {
+				componentsToBeUpdated[component] = append(entry, cell)
+			} else {
+				componentsToBeUpdated[component] = []*models.Cell{cell}
+			}
+
+			newEvents = append(newEvents, models.NewUpdateComponentActivityEvent(component))
+		}
+	}
+
+	for cmp, wallsToBeRemoved := range componentsToBeUpdated {
+		updatedWalls := make([]*models.Cell, 0)
+		for _, w := range cmp.Walls {
+			found := false
+			for _, wallToBeRemoved := range wallsToBeRemoved {
+				if wallToBeRemoved == w {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				updatedWalls = append(updatedWalls, w)
+			}
+		}
+
+		newUpdates = append(newUpdates, models.NewComponentsUpdate(cmp.ID, models.ComponentSetRequest{
+			Walls: updatedWalls,
+		}))
+	}
+
+	return processResult{
+		events:  newEvents,
+		updates: newUpdates,
+	}
+}
+
 func (store *Store) applyUpdates(updates []models.Update) {
 	for _, update := range updates {
 		switch casted := update.(type) {
@@ -364,7 +430,7 @@ func (store *Store) applyFieldUpdate(update *models.FieldUpdate) {
 	log.Printf("events: update: field: %v", update)
 	page := store.field.Get(update.Crd.Page)
 	if page != nil {
-		page.Set(update.Crd, &update.Request)
+		page.Set(update.Crd, update.Request)
 	}
 }
 
