@@ -20,7 +20,7 @@ func (store *Store) Handle(event *models.Event) {
 
 // Start - starts event hadling process
 func (store *Store) Start() {
-	locker := NewLocker(store.field.PageRadius)
+	// locker := NewLocker(store.field.PageRadius)
 	go func() {
 		for {
 			event := <-store.eventQueue
@@ -28,9 +28,9 @@ func (store *Store) Start() {
 				go func() {
 					result := store.processEvent(event)
 
-					lockerKeys := locker.LockForUpdates(result.updates)
+					// lockerKeys := locker.LockForUpdates(result.updates)
 					store.applyUpdates(result.updates)
-					locker.UnlockForKeys(lockerKeys)
+					// locker.UnlockForKeys(lockerKeys)
 
 					for _, event := range result.events {
 						store.eventQueue <- &event
@@ -188,7 +188,7 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 
 	var component *models.Component
 
-	wall := models.NewWallCell(event.PlayerID, event.Crd, nil)
+	wall := models.NewWallCell(event.PlayerID, event.Crd, page, nil)
 
 	neighbours := page.GetNeibhours(event.Crd.Cell)
 
@@ -439,7 +439,7 @@ func (store *Store) applyComponentsUpdate(update *models.ComponentsUpdate) {
 		return
 	}
 
-	component, ok := store.components[update.ID]
+	component, ok := store.components.Get(update.ID)
 	if !ok {
 		return
 	}
@@ -455,17 +455,17 @@ func (store *Store) applyComponentsUpdate(update *models.ComponentsUpdate) {
 }
 
 func (store *Store) applyAddComponentUpdate(update *models.AddComponentUpdate) {
-	_, ok := store.components[update.Component.ID]
+	_, ok := store.components.Get(update.Component.ID)
 	if ok {
 		return
 	}
 
 	log.Printf("events: update: add component: %v", update)
 
-	store.components[update.Component.ID] = update.Component
+	store.components.Set(update.Component)
 }
 
 func (store *Store) applyRemoveComponentUpdate(update *models.RemoveComponentUpdate) {
 	log.Printf("events: update: remove component: %v", update)
-	delete(store.components, update.ID)
+	store.components.Delete(update.ID)
 }

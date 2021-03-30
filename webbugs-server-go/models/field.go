@@ -43,6 +43,17 @@ func (field *Field) Get(p Coordinates) *Page {
 	return nil
 }
 
+// Get0 - retrieves a page with 0,0,0 coordinates
+func (field *Field) Get0() *Page {
+	var key int64 = 0
+	page, ok := field.Grid.Load(key)
+	if ok {
+		return page.(*Page)
+	}
+
+	return nil
+}
+
 // Create - creates a page
 func (field *Field) Create(p Coordinates) *Page {
 	newPage := NewPage(field.PageRadius, p)

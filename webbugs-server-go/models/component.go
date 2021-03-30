@@ -1,5 +1,7 @@
 package models
 
+import "github.com/google/uuid"
+
 // Component - type for a wall graph component
 type Component struct {
 	ID       uint
@@ -17,4 +19,16 @@ func NewComponent(isActive bool, walls []*Cell) Component {
 		IsActive: isActive,
 		Walls:    walls,
 	}
+}
+
+func (page *Page) CheckIfComponentActive(component *Component, playerID uuid.UUID) bool {
+	for _, w := range component.Walls {
+		for _, n := range page.GetNeibhours(w.Crd.Cell) {
+			if n != nil && n.CellType == CellTypeBug && n.PlayerID == playerID {
+				return true
+			}
+		}
+	}
+
+	return false
 }

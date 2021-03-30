@@ -20,13 +20,14 @@ type Cell struct {
 	CellType  CellType
 	PlayerID  uuid.UUID
 	Crd       FullCoordinates
+	Page      *Page
 	Component *Component
 	IsBase    bool
 	CreatedAt time.Time
 }
 
 // NewBugCell - creates a new cell of the bug type
-func NewBugCell(playerID uuid.UUID, crd FullCoordinates, isBase bool) Cell {
+func NewBugCell(playerID uuid.UUID, crd FullCoordinates, page *Page, isBase bool) Cell {
 	return Cell{
 		CellType:  CellTypeBug,
 		PlayerID:  playerID,
@@ -38,7 +39,7 @@ func NewBugCell(playerID uuid.UUID, crd FullCoordinates, isBase bool) Cell {
 }
 
 // NewWallCell - creates a new cell of the wall type
-func NewWallCell(playerID uuid.UUID, crd FullCoordinates, component *Component) Cell {
+func NewWallCell(playerID uuid.UUID, crd FullCoordinates, page *Page, component *Component) Cell {
 	return Cell{
 		CellType:  CellTypeBug,
 		PlayerID:  playerID,
@@ -66,9 +67,10 @@ func (cell *Cell) FillWithCellSetRequest(request CellSetRequest) {
 }
 
 // FromCellSetRequest - creates a new cell from CellSetRequest
-func FromCellSetRequest(request CellSetRequest, crd FullCoordinates) Cell {
+func FromCellSetRequest(request CellSetRequest, crd FullCoordinates, page *Page) Cell {
 	newCell := Cell{}
 	newCell.Crd = crd
+	newCell.Page = page
 
 	newCell.FillWithCellSetRequest(request)
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"webbugs-server/models"
+	"webbugs-server/models/components"
 
 	"github.com/google/uuid"
 )
@@ -9,7 +10,7 @@ import (
 // Store - stores all app data
 type Store struct {
 	field         *models.Field
-	components    map[uint]*models.Component
+	components    *components.Components
 	players       map[uuid.UUID]*models.PlayerInfo
 	subscribtions []func()
 	eventQueue    chan *models.Event
@@ -19,9 +20,10 @@ type Store struct {
 // NewStore - creates a new store
 func NewStore(pageRadius uint) Store {
 	field := models.NewField(pageRadius)
+	var components components.Components
 	return Store{
 		field:         &field,
-		components:    make(map[uint]*models.Component),
+		components:    &components,
 		players:       make(map[uuid.UUID]*models.PlayerInfo, 0),
 		subscribtions: make([]func(), 0),
 		eventQueue:    make(chan *models.Event),

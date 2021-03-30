@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 	"webbugs-server/models"
+	"webbugs-server/models/components"
 
 	"github.com/google/uuid"
 )
@@ -19,7 +20,8 @@ func ClearField(store *Store) {
 
 	page := store.field.Get(models.NewCoordinates(0, 0, 0))
 
-	store.components = make(map[uint]*models.Component)
+	var components components.Components
+	store.components = &components
 	store.players = make(map[uuid.UUID]*models.PlayerInfo)
 
 	keys := make([]int64, 0)
@@ -71,7 +73,7 @@ func LoadSave(fileName string, store *Store) {
 				IsActive: isActive,
 				Walls:    make([]*models.Cell, 0),
 			}
-			store.components[componentID] = &newComponent
+			store.components.Set(&newComponent)
 
 			log.Printf("component: %v", newComponent)
 		}
@@ -138,9 +140,16 @@ func LoadSave(fileName string, store *Store) {
 				componentIDint, err := strconv.Atoi(componentIDI.(string))
 				componentID := uint(componentIDint)
 				if err == nil {
-					cmp, exists := store.components[componentID]
+					cmp, exists := store.components.Get(componentID)
 					if exists {
-						component = cmp
+						component = (*models.Component)(cmp)
+					} else {
+						component = &models.Component{
+							ID:       componentID,
+							Walls:    make([]*models.Cell, 0),
+							IsActive: false,
+						}
+						store.components.Set(component)
 					}
 				}
 			}
@@ -163,7 +172,11 @@ func LoadSave(fileName string, store *Store) {
 			}
 
 			if component != nil {
-				component.Walls = append(component.Walls, page.Get(crd))
+				wall := page.Get(crd)
+				component.Walls = append(component.Walls, wall)
+				if !component.IsActive {
+					component.IsActive = page.CheckIfComponentActive(component, wall.PlayerID)
+				}
 			}
 
 			log.Printf("%v", request)

@@ -63,7 +63,7 @@ func (page *Page) Set(crd FullCoordinates, request *CellSetRequest) error {
 
 			cell.FillWithCellSetRequest(*request)
 		} else {
-			newCell := FromCellSetRequest(*request, crd)
+			newCell := FromCellSetRequest(*request, crd, page)
 			page.Grid.Store(key, &newCell)
 		}
 	} else {
@@ -141,6 +141,12 @@ func (page *Page) GetNeibhourCoordinates(crd Coordinates) []Coordinates {
 	return result
 }
 
+func AreNeighbours(crd0 Coordinates, crd1 Coordinates) bool {
+	return (crd0.X == crd1.X && math.Abs(float64(crd0.Y)-float64(crd1.Y)) == 1) ||
+		(crd0.Y == crd1.Y && math.Abs(float64(crd0.X)-float64(crd1.X)) == 1) ||
+		(crd0.Z == crd1.Z && math.Abs(float64(crd0.Y)-float64(crd1.Y)) == 1)
+}
+
 // GetNeibhours - retrieves neighbour cells
 func (page *Page) GetNeibhours(crd Coordinates) []*Cell {
 	crds := page.GetNeibhourCoordinates(crd)
@@ -149,6 +155,22 @@ func (page *Page) GetNeibhours(crd Coordinates) []*Cell {
 
 	for i, crd2 := range crds {
 		result[i] = page.Get(crd2)
+	}
+
+	return result
+}
+
+// GetOwnWallNeibhours - retrieves neighbour wall cells of a player
+func (page *Page) GetOwnWallNeibhours(crd Coordinates, playerID uuid.UUID) []*Cell {
+	crds := page.GetNeibhourCoordinates(crd)
+
+	result := make([]*Cell, 0)
+
+	for _, crd2 := range crds {
+		cell := page.Get(crd2)
+		if cell != nil && cell.PlayerID == playerID && cell.CellType == CellTypeWall {
+			result = append(result, cell)
+		}
 	}
 
 	return result

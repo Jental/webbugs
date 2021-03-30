@@ -3,6 +3,7 @@ package contract
 import (
 	"strconv"
 	"webbugs-server/models"
+	"webbugs-server/models/components"
 
 	"github.com/google/uuid"
 )
@@ -134,13 +135,15 @@ func ConvertField(page *models.Field) FieldContract {
 }
 
 // ConvertComponents - converts components to contract
-func ConvertComponents(components map[uint]*models.Component) map[uint]ComponentContract {
-	result := make(map[uint]ComponentContract, len(components))
+func ConvertComponents(components *components.Components) map[uint]ComponentContract {
+	result := make(map[uint]ComponentContract, components.Len())
 
-	for i, c := range components {
+	components.Range(func(i uint, c *models.Component) bool {
 		wallIDs := make([]FullCoordinatesContract, len(c.Walls))
 		for j, w := range c.Walls {
-			wallIDs[j] = convertFullCoordinates(&w.Crd)
+			if j < len(wallIDs) {
+				wallIDs[j] = convertFullCoordinates(&w.Crd)
+			}
 		}
 
 		result[i] = ComponentContract{
@@ -148,7 +151,9 @@ func ConvertComponents(components map[uint]*models.Component) map[uint]Component
 			IsActive: c.IsActive,
 			WallIDs:  wallIDs,
 		}
-	}
+
+		return true
+	})
 
 	return result
 }

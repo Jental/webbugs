@@ -16,7 +16,7 @@ import (
 )
 
 const port = ":5000"
-const pageRadius = 10
+const pageRadius = 30
 
 var connectedClientCount uint = 0
 var store Store = NewStore(pageRadius)
@@ -100,16 +100,18 @@ func main() {
 		log.Print("No game loaded. Epmty field will be used")
 	}
 
-	f, err := os.OpenFile("out.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("logs/out.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
 	defer f.Close()
-	// log.SetOutput(f)
+	log.SetOutput(f)
 
 	store.subscribtions = append(store.subscribtions, onStoreUpdate)
 	store.Start()
 	// store.StartWallRemover()
+
+	go store.startRemovingImmortals()
 
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 
