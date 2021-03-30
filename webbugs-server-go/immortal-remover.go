@@ -283,6 +283,10 @@ func (store *Store) findNextLoopStart(component *models.Component, page *models.
 		}
 	}
 
+	if len(wallsWithOtherNeighbours) == 0 {
+		return nil
+	}
+
 	wallIdx := int(rand.Int31n(int32(len(wallsWithOtherNeighbours))))
 	wall := wallsWithOtherNeighbours[wallIdx]
 
