@@ -4,5 +4,5 @@ node_modules/
 yarn.lock
 yarn-error.log
 workspace.code-workspace
-webbugs-server-go/logs/
+webbugs-server-go/
 webbugs-common-go/
