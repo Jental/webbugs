@@ -2,15 +2,16 @@ package main
 
 import (
 	"webbugs-server/models"
-	"webbugs-server/models/components"
+
+	cmodels "github.com/jental/webbugs-common-go/models"
 
 	"github.com/google/uuid"
 )
 
 // Store - stores all app data
 type Store struct {
-	field         *models.Field
-	components    *components.Components
+	field         *cmodels.Field
+	components    *cmodels.Components
 	players       map[uuid.UUID]*models.PlayerInfo
 	subscribtions []func()
 	eventQueue    chan *models.Event
@@ -19,8 +20,8 @@ type Store struct {
 
 // NewStore - creates a new store
 func NewStore(pageRadius uint) Store {
-	field := models.NewField(pageRadius)
-	var components components.Components
+	field := cmodels.NewField(pageRadius)
+	var components cmodels.Components
 	return Store{
 		field:         &field,
 		components:    &components,

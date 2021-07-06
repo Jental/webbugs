@@ -3,6 +3,8 @@ package main
 import (
 	"time"
 	"webbugs-server/models"
+
+	cmodels "github.com/jental/webbugs-common-go/models"
 )
 
 var interval time.Duration = 10 * time.Second
@@ -18,8 +20,8 @@ func (store *Store) StartWallRemover() {
 
 			now := time.Now().UTC()
 
-			crds := make([]models.FullCoordinates, 0)
-			store.components.Range(func(key uint, c *models.Component) bool {
+			crds := make([]cmodels.Coordinates, 0)
+			store.components.Range(func(key uint, c *cmodels.Component) bool {
 				for _, w := range c.Walls {
 					if now.Sub(w.CreatedAt) >= duration {
 						crds = append(crds, w.Crd)

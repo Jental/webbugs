@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"strconv"
 
+	cmodels "github.com/jental/webbugs-common-go/models"
+
 	"github.com/google/uuid"
 )
 
 // CellSetRequest - struct for on cell
 type CellSetRequest struct {
-	CellType  *CellType
+	CellType  *cmodels.CellType
 	PlayerID  uuid.UUID
-	Component *Component
+	Component *cmodels.Component
 	IsBase    *bool
 }
 
@@ -21,9 +23,9 @@ func (request CellSetRequest) String() string {
 		cellTypeStr = "nil"
 	} else {
 		switch *request.CellType {
-		case CellTypeBug:
+		case cmodels.CellTypeBug:
 			cellTypeStr = "bug"
-		case CellTypeWall:
+		case cmodels.CellTypeWall:
 			cellTypeStr = "wall"
 		default:
 			cellTypeStr = "unknown"
@@ -49,4 +51,51 @@ func (request CellSetRequest) String() string {
 	}
 
 	return fmt.Sprintf("CellSetRequest:{ %v %v %v %v }", request.PlayerID, cellTypeStr, componentStr, isBaseStr)
+}
+
+// FillCellWithCellSetRequest - fills a cell with a request data
+func FillCellWithCellSetRequest(cell *cmodels.Cell, request CellSetRequest) {
+	if request.PlayerID != uuid.Nil {
+		cell.PlayerID = request.PlayerID
+	}
+	if request.CellType != nil {
+		cell.CellType = *request.CellType
+	}
+	if request.Component != nil {
+		cell.Component = request.Component
+	}
+	if request.IsBase != nil {
+		cell.IsBase = *request.IsBase
+	}
+}
+
+// FromCellSetRequest - creates a new cell from CellSetRequest
+func CellFromCellSetRequest(request CellSetRequest, crd cmodels.Coordinates) cmodels.Cell {
+	newCell := cmodels.Cell{}
+	newCell.Crd = crd
+
+	FillCellWithCellSetRequest(&newCell, request)
+
+	return newCell
+}
+
+// ApplyCellSetRequest - applies a CellSetRequest
+func ApplyCellSetRequest(field *cmodels.Field, request *CellSetRequest, crd cmodels.Coordinates) error {
+	if request != nil {
+		cell, exists := field.GetWithExists(crd)
+		if exists && cell != nil {
+			if crd != cell.Crd {
+				return fmt.Errorf("page: set: Unmatching coordinates: %v, %v", crd, cell.Crd)
+			}
+
+			FillCellWithCellSetRequest(cell, *request)
+		} else {
+			newCell := CellFromCellSetRequest(*request, crd)
+			field.Set(crd, &newCell)
+		}
+	} else {
+		field.Set(crd, nil)
+	}
+
+	return nil
 }

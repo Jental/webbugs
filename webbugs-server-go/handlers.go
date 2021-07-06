@@ -4,6 +4,8 @@ import (
 	"log"
 	"runtime"
 	"webbugs-server/models"
+
+	cmodels "github.com/jental/webbugs-common-go/models"
 )
 
 type processResult struct {
@@ -62,25 +64,20 @@ func (store *Store) processEvent(event *models.Event) processResult {
 }
 
 func (store *Store) processClickEvent(event *models.ClickEvent) processResult {
-	page := store.field.Get(event.Crd.Page)
-	if page == nil {
-		return emptyProcessResult
-	}
-
-	value := page.Get(event.Crd.Cell)
+	value := store.field.Get(event.Crd)
 	if value == nil {
-		neighbours := page.GetNeibhours(event.Crd.Cell)
+		neighbours := store.field.GetNeibhours(event.Crd)
 
 		isActiveNeighbourPresent := false
 		for _, n := range neighbours {
 			if n != nil && n.PlayerID == event.PlayerID {
-				if n.CellType == models.CellTypeBug {
+				if n.CellType == cmodels.CellTypeBug {
 					// log.Printf("events: processClickEvent: active neighbour: bug: %v", *n)
 					isActiveNeighbourPresent = true
 					break
 				}
 
-				if n.CellType == models.CellTypeWall && n.Component != nil && n.Component.IsActive {
+				if n.CellType == cmodels.CellTypeWall && n.Component != nil && n.Component.IsActive {
 					// log.Printf("events: processClickEvent: active neighbour: wall: %v %v", *n, *n.Component)
 					isActiveNeighbourPresent = true
 					break
@@ -97,18 +94,18 @@ func (store *Store) processClickEvent(event *models.ClickEvent) processResult {
 		}
 
 		return emptyProcessResult
-	} else if value.CellType == models.CellTypeBug && value.PlayerID != event.PlayerID {
-		neighbours := page.GetNeibhours(event.Crd.Cell)
+	} else if value.CellType == cmodels.CellTypeBug && value.PlayerID != event.PlayerID {
+		neighbours := store.field.GetNeibhours(event.Crd)
 
 		isActiveNeighbourPresent := false
 		for _, n := range neighbours {
 			if n != nil && n.PlayerID == event.PlayerID {
-				if n.CellType == models.CellTypeBug {
+				if n.CellType == cmodels.CellTypeBug {
 					isActiveNeighbourPresent = true
 					break
 				}
 
-				if n.CellType == models.CellTypeWall && n.Component != nil && n.Component.IsActive {
+				if n.CellType == cmodels.CellTypeWall && n.Component != nil && n.Component.IsActive {
 					isActiveNeighbourPresent = true
 					break
 				}
@@ -130,19 +127,14 @@ func (store *Store) processClickEvent(event *models.ClickEvent) processResult {
 }
 
 func (store *Store) processSetBugEvent(event *models.SetBugEvent) processResult {
-	page := store.field.Get(event.Crd.Page)
-	if page == nil {
-		return emptyProcessResult
-	}
-
 	newEvents := make([]models.Event, 0)
 	newUpdates := make([]models.Update, 0)
 
-	neighbours := page.GetNeibhours(event.Crd.Cell)
+	neighbours := store.field.GetNeibhours(event.Crd)
 
-	ownNeighbourWallComponents := make([]*models.Component, 0)
+	ownNeighbourWallComponents := make([]*cmodels.Component, 0)
 	for _, n := range neighbours {
-		if n != nil && n.CellType == models.CellTypeWall && n.PlayerID == event.PlayerID {
+		if n != nil && n.CellType == cmodels.CellTypeWall && n.PlayerID == event.PlayerID {
 			alreadyAdded := false
 			for _, onc := range ownNeighbourWallComponents {
 				if onc == n.Component {
@@ -164,7 +156,7 @@ func (store *Store) processSetBugEvent(event *models.SetBugEvent) processResult 
 		newUpdates = append(newUpdates, models.NewComponentsUpdate(cmp.ID, models.ComponentSetRequest{IsActive: &isActive}))
 	}
 
-	cellType := models.CellTypeBug
+	cellType := cmodels.CellTypeBug
 	newUpdates = append(newUpdates, models.NewFieldUpdate(event.Crd, &models.CellSetRequest{
 		CellType: &cellType,
 		PlayerID: event.PlayerID,
@@ -178,26 +170,21 @@ func (store *Store) processSetBugEvent(event *models.SetBugEvent) processResult 
 }
 
 func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResult {
-	page := store.field.Get(event.Crd.Page)
-	if page == nil {
-		return emptyProcessResult
-	}
-
 	newEvents := make([]models.Event, 0)
 	newUpdates := make([]models.Update, 0)
 
-	var component *models.Component
+	var component *cmodels.Component
 
-	wall := models.NewWallCell(event.PlayerID, event.Crd, page, nil)
+	wall := cmodels.NewWallCell(event.PlayerID, event.Crd, nil)
 
-	neighbours := page.GetNeibhours(event.Crd.Cell)
+	neighbours := store.field.GetNeibhours(event.Crd)
 
-	ownNeighbourWallComponents := make([]*models.Component, 0)
-	ownNeighbourBugs := make([]*models.Cell, 0)
-	allNeighbourWallComponents := make([]*models.Component, 0)
+	ownNeighbourWallComponents := make([]*cmodels.Component, 0)
+	ownNeighbourBugs := make([]*cmodels.Cell, 0)
+	allNeighbourWallComponents := make([]*cmodels.Component, 0)
 	for _, n := range neighbours {
 		if n != nil {
-			if n.CellType == models.CellTypeWall {
+			if n.CellType == cmodels.CellTypeWall {
 				if n.PlayerID == event.PlayerID {
 					alreadyAdded := false
 					for _, onc := range ownNeighbourWallComponents {
@@ -225,7 +212,7 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 				}
 			}
 
-			if n.CellType == models.CellTypeBug && n.PlayerID == event.PlayerID {
+			if n.CellType == cmodels.CellTypeBug && n.PlayerID == event.PlayerID {
 				ownNeighbourBugs = append(ownNeighbourBugs, n)
 			}
 		}
@@ -235,9 +222,9 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 	// log.Printf("events: processSetWallEvent: allNeighbourWallComponents: %v", len(allNeighbourWallComponents))
 
 	if len(ownNeighbourWallComponents) == 0 {
-		newComponent := models.NewComponent(
+		newComponent := cmodels.NewComponent(
 			len(ownNeighbourBugs) > 0,
-			[]*models.Cell{&wall})
+			[]*cmodels.Cell{&wall})
 		component = &newComponent
 
 		newUpdates = append(newUpdates, models.NewAddComponentUpdate(&newComponent))
@@ -252,7 +239,7 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 				Walls:    append(component.Walls, &wall),
 			}))
 	} else if len(ownNeighbourWallComponents) > 1 {
-		allWalls := make([]*models.Cell, 0)
+		allWalls := make([]*cmodels.Cell, 0)
 		for _, n := range ownNeighbourWallComponents {
 			allWalls = append(allWalls, n.Walls...)
 		}
@@ -267,7 +254,7 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 			}
 		}
 
-		newComponent := models.NewComponent(
+		newComponent := cmodels.NewComponent(
 			isActive,
 			append(allWalls, &wall))
 		component = &newComponent
@@ -293,7 +280,7 @@ func (store *Store) processSetWallEvent(event *models.SetWallEvent) processResul
 		newEvents = append(newEvents, models.NewUpdateComponentActivityEvent(n))
 	}
 
-	cellType := models.CellTypeWall
+	cellType := cmodels.CellTypeWall
 	newUpdates = append(newUpdates, models.NewFieldUpdate(event.Crd, &models.CellSetRequest{
 		CellType:  &cellType,
 		Component: component,
@@ -311,17 +298,12 @@ func (store *Store) processUpdateComponentActivityEvent(event *models.UpdateComp
 		return emptyProcessResult
 	}
 
-	page := store.field.Get(models.NewCoordinates(0, 0, 0)) // TODO: fix page coordinates
-	if page == nil {
-		return emptyProcessResult
-	}
-
 	playerID := event.Component.Walls[0].PlayerID
 
 	isActive := false
 	for _, w := range event.Component.Walls {
-		for _, n := range page.GetNeibhours(w.Crd.Cell) {
-			if n != nil && n.CellType == models.CellTypeBug && n.PlayerID == playerID {
+		for _, n := range store.field.GetNeibhours(w.Crd) {
+			if n != nil && n.CellType == cmodels.CellTypeBug && n.PlayerID == playerID {
 				isActive = true
 				break
 			}
@@ -350,28 +332,24 @@ func (store *Store) processClearCellEvent(event *models.ClearCellsEvent) process
 	newEvents := make([]models.Event, 0)
 	newUpdates := make([]models.Update, 0)
 
-	componentsToBeUpdated := make(map[*models.Component][]*models.Cell)
+	componentsToBeUpdated := make(map[*cmodels.Component][]*cmodels.Cell)
 
 	for _, crd := range event.Crd {
-		page := store.field.Get(crd.Page) // TODO: fix page coordinates
-		if page == nil {
-			continue
-		}
-		cell := page.Get(crd.Cell)
+		cell := store.field.Get(crd)
 		if cell == nil {
 			continue
 		}
 
 		newUpdates = append(newUpdates, models.NewFieldUpdate(crd, nil))
 
-		if cell.CellType == models.CellTypeWall {
+		if cell.CellType == cmodels.CellTypeWall {
 			component := cell.Component
 
 			entry, exists := componentsToBeUpdated[component]
 			if exists {
 				componentsToBeUpdated[component] = append(entry, cell)
 			} else {
-				componentsToBeUpdated[component] = []*models.Cell{cell}
+				componentsToBeUpdated[component] = []*cmodels.Cell{cell}
 			}
 
 			newEvents = append(newEvents, models.NewUpdateComponentActivityEvent(component))
@@ -379,7 +357,7 @@ func (store *Store) processClearCellEvent(event *models.ClearCellsEvent) process
 	}
 
 	for cmp, wallsToBeRemoved := range componentsToBeUpdated {
-		updatedWalls := make([]*models.Cell, 0)
+		updatedWalls := make([]*cmodels.Cell, 0)
 		for _, w := range cmp.Walls {
 			found := false
 			for _, wallToBeRemoved := range wallsToBeRemoved {
@@ -426,12 +404,10 @@ func (store *Store) applyUpdates(updates []models.Update) {
 	}
 }
 
-func (store *Store) applyFieldUpdate(update *models.FieldUpdate) {
+func (store *Store) applyFieldUpdate(update *models.FieldUpdate) error {
 	log.Printf("events: update: field: %v", update)
-	page := store.field.Get(update.Crd.Page)
-	if page != nil {
-		page.Set(update.Crd, update.Request)
-	}
+
+	return models.ApplyCellSetRequest(store.field, update.Request, update.Crd)
 }
 
 func (store *Store) applyComponentsUpdate(update *models.ComponentsUpdate) {

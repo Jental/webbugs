@@ -7,8 +7,11 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"webbugs-server/contract"
 	"webbugs-server/models"
+
+	contracts "github.com/jental/webbugs-common-go/contracts"
+	cmappers "github.com/jental/webbugs-common-go/mappers"
+	cmodels "github.com/jental/webbugs-common-go/models"
 
 	gosocketio "github.com/ambelovsky/gosf-socketio"
 	transport "github.com/ambelovsky/gosf-socketio/transport"
@@ -38,27 +41,23 @@ func onRegister(c *gosocketio.Channel) {
 		i = i + 1
 	}
 
-	c.Emit(string(contract.MetadataMessageType), contract.MetadataContract{
+	c.Emit(string(contracts.MetadataMessageType), contracts.MetadataContract{
 		PlayerID:  newPlayerID,
 		PlayerIDs: allPlayerIDs,
 	})
 
-	pageCrd := models.NewCoordinates(0, 0, 0)
-	cc := make(chan models.Coordinates)
-	go store.field.Get(pageCrd).GetRandomEmptyCellCoordinates(cc)
+	cc := make(chan cmodels.Coordinates)
+	go store.field.GetRandomEmptyCellCoordinates(cc)
 	crd := <-cc
 	log.Printf("Setting a base at cell %v", crd)
 	var event models.Event = models.NewSetBugEvent(
-		models.FullCoordinates{
-			Page: pageCrd,
-			Cell: crd,
-		},
+		crd,
 		newPlayerID,
 		true)
 	store.Handle(&event)
 }
 
-func onClick(data contract.ClickContract) {
+func onClick(data contracts.ClickContract) {
 	player, exists := store.players[data.PlayerID]
 	if !exists {
 		return
@@ -67,10 +66,7 @@ func onClick(data contract.ClickContract) {
 	player.LastActivity = time.Now().UTC()
 
 	event := models.NewClickEvent(
-		models.FullCoordinates{
-			Page: models.NewCoordinates(data.Crd.Page.X, data.Crd.Page.Y, data.Crd.Page.Z),
-			Cell: models.NewCoordinates(data.Crd.Cell.X, data.Crd.Cell.Y, data.Crd.Cell.Z),
-		},
+		cmodels.NewCoordinates(data.Crd.Cell.X, data.Crd.Cell.Y, data.Crd.Cell.Z),
 		data.PlayerID)
 	event2 := models.Event(event)
 	store.Handle(&event2)
@@ -79,10 +75,7 @@ func onClick(data contract.ClickContract) {
 func onStoreUpdate() {
 	for _, player := range store.players {
 		if player.Client != nil {
-			player.Client.Emit(string(contract.DataMessageType), contract.DataContract{
-				Field:      contract.ConvertField(store.field),
-				Components: contract.ConvertComponents(store.components),
-			})
+			player.Client.Emit(string(contracts.DataMessageType), cmappers.MapFromData(store.field, store.components))
 		}
 	}
 }
@@ -129,16 +122,16 @@ func main() {
 		connectedClientCount--
 	})
 
-	server.On(string(contract.RegisterMessageType), func(c *gosocketio.Channel) {
+	server.On(string(contracts.RegisterMessageType), func(c *gosocketio.Channel) {
 		log.Printf("registration: %v", c.Ip())
 		onRegister(c)
 	})
 
-	server.On(string(contract.ClickMessageType), func(c *gosocketio.Channel, data contract.ClickContract) {
+	server.On(string(contracts.ClickMessageType), func(c *gosocketio.Channel, data contracts.ClickContract) {
 		onClick(data)
 	})
 
-	server.On(string(contract.ResetMessageType), func(c *gosocketio.Channel) {
+	server.On(string(contracts.ResetMessageType), func(c *gosocketio.Channel) {
 		log.Printf("field reset: %v", c.Ip())
 	})
 

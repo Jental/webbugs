@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"time"
 	"webbugs-server/models"
-	"webbugs-server/models/components"
+
+	cmodels "github.com/jental/webbugs-common-go/models"
 
 	"github.com/google/uuid"
 )
@@ -18,19 +19,17 @@ func ClearField(store *Store) {
 	store.isLocked = true
 	defer func() { store.isLocked = prevIsLocked }()
 
-	page := store.field.Get(models.NewCoordinates(0, 0, 0))
-
-	var components components.Components
+	var components cmodels.Components
 	store.components = &components
 	store.players = make(map[uuid.UUID]*models.PlayerInfo)
 
 	keys := make([]int64, 0)
-	page.Grid.Range(func(key interface{}, value interface{}) bool {
+	store.field.Grid.Range(func(key interface{}, value interface{}) bool {
 		keys = append(keys, key.(int64))
 		return true
 	})
 	for _, key := range keys {
-		page.Grid.Store(key, nil)
+		store.field.Grid.Store(key, nil)
 	}
 }
 
@@ -68,10 +67,10 @@ func LoadSave(fileName string, store *Store) {
 				isActive = isActiveI.(bool)
 			}
 
-			newComponent := models.Component{
+			newComponent := cmodels.Component{
 				ID:       componentID,
 				IsActive: isActive,
-				Walls:    make([]*models.Cell, 0),
+				Walls:    make([]*cmodels.Cell, 0),
 			}
 			store.components.Set(&newComponent)
 
@@ -96,12 +95,12 @@ func LoadSave(fileName string, store *Store) {
 				continue
 			}
 			cellTypeF := cellTypeI.(float64)
-			var cellType models.CellType
+			var cellType cmodels.CellType
 			switch cellTypeF {
 			case 0:
-				cellType = models.CellTypeBug
+				cellType = cmodels.CellTypeBug
 			case 1:
-				cellType = models.CellTypeWall
+				cellType = cmodels.CellTypeWall
 			}
 
 			playerIDStr, exists := value["playerID"]
@@ -123,8 +122,7 @@ func LoadSave(fileName string, store *Store) {
 				continue
 			}
 			crdm := crdi.(map[string]interface{})
-			crd := models.NewCoordinates(int64(crdm["x"].(float64)), int64(crdm["y"].(float64)), int64(crdm["z"].(float64)))
-			fcrd := models.FullCoordinates{Page: models.NewCoordinates(0, 0, 0), Cell: crd}
+			fcrd := cmodels.NewCoordinates(int64(crdm["x"].(float64)), int64(crdm["y"].(float64)), int64(crdm["z"].(float64)))
 
 			isBaseI, exists := value["isBase"]
 			var isBase bool
@@ -135,18 +133,18 @@ func LoadSave(fileName string, store *Store) {
 			}
 
 			componentIDI, exists := value["component_id"]
-			var component *models.Component = nil
+			var component *cmodels.Component = nil
 			if exists && componentIDI != nil {
 				componentIDint, err := strconv.Atoi(componentIDI.(string))
 				componentID := uint(componentIDint)
 				if err == nil {
 					cmp, exists := store.components.Get(componentID)
 					if exists {
-						component = (*models.Component)(cmp)
+						component = (*cmodels.Component)(cmp)
 					} else {
-						component = &models.Component{
+						component = &cmodels.Component{
 							ID:       componentID,
-							Walls:    make([]*models.Cell, 0),
+							Walls:    make([]*cmodels.Cell, 0),
 							IsActive: false,
 						}
 						store.components.Set(component)
@@ -154,15 +152,13 @@ func LoadSave(fileName string, store *Store) {
 				}
 			}
 
-			page := store.field.Get(models.NewCoordinates(0, 0, 0))
-
 			request := models.CellSetRequest{
 				CellType:  &cellType,
 				PlayerID:  playerID,
 				Component: component,
 				IsBase:    &isBase,
 			}
-			page.Set(fcrd, &request)
+			models.ApplyCellSetRequest(store.field, &request, fcrd)
 
 			store.players[playerID] = &models.PlayerInfo{
 				ID:           playerID,
@@ -172,10 +168,10 @@ func LoadSave(fileName string, store *Store) {
 			}
 
 			if component != nil {
-				wall := page.Get(crd)
+				wall := store.field.Get(fcrd)
 				component.Walls = append(component.Walls, wall)
 				if !component.IsActive {
-					component.IsActive = page.CheckIfComponentActive(component, wall.PlayerID)
+					component.IsActive = store.field.CheckIfComponentActive(component, wall.PlayerID)
 				}
 			}
 

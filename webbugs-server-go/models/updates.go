@@ -1,6 +1,10 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+
+	cmodels "github.com/jental/webbugs-common-go/models"
+)
 
 // UpdateType - update type
 type UpdateType uint
@@ -21,12 +25,12 @@ type Update interface {
 // FieldUpdate - field update
 type FieldUpdate struct {
 	UpdateType UpdateType
-	Crd        FullCoordinates
+	Crd        cmodels.Coordinates
 	Request    *CellSetRequest
 }
 
 // NewFieldUpdate - creates new field update
-func NewFieldUpdate(crd FullCoordinates, request *CellSetRequest) FieldUpdate {
+func NewFieldUpdate(crd cmodels.Coordinates, request *CellSetRequest) FieldUpdate {
 	return FieldUpdate{
 		UpdateType: UpdateTypeField,
 		Crd:        crd,
@@ -35,7 +39,7 @@ func NewFieldUpdate(crd FullCoordinates, request *CellSetRequest) FieldUpdate {
 }
 
 func (update FieldUpdate) String() string {
-	return fmt.Sprintf("FieldUpdate:{ %v %v %v }", update.Crd.Page, update.Crd.Cell, update.Request)
+	return fmt.Sprintf("FieldUpdate:{ %v %v }", update.Crd, update.Request)
 }
 
 // ComponentsUpdate - components update
@@ -72,11 +76,11 @@ func (update ComponentsUpdate) String() string {
 // AddComponentUpdate - add component update
 type AddComponentUpdate struct {
 	UpdateType UpdateType
-	Component  *Component
+	Component  *cmodels.Component
 }
 
 // NewAddComponentUpdate - creates new add component update
-func NewAddComponentUpdate(component *Component) AddComponentUpdate {
+func NewAddComponentUpdate(component *cmodels.Component) AddComponentUpdate {
 	return AddComponentUpdate{
 		UpdateType: UpdateTypeAddComponent,
 		Component:  component,

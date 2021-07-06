@@ -10,6 +10,8 @@ import (
 	"time"
 	"webbugs-server/models"
 
+	cmodels "github.com/jental/webbugs-common-go/models"
+
 	"github.com/google/uuid"
 )
 
@@ -18,7 +20,7 @@ const BIG_TIMEOUT time.Duration = 5 * time.Second
 
 var logger *log.Logger
 
-func getAngle(cell0 models.Coordinates, cell1 models.Coordinates) float64 {
+func getAngle(cell0 cmodels.Coordinates, cell1 cmodels.Coordinates) float64 {
 	dx := cell1.X - cell0.X
 	dy := cell1.Y - cell0.Y
 	dz := cell1.Z - cell0.Z
@@ -47,7 +49,7 @@ func getAngle(cell0 models.Coordinates, cell1 models.Coordinates) float64 {
 
 var sq3 float64 = math.Sqrt(3)
 
-func getCellCoordinatesByAngle(cell models.Coordinates, angle float64) models.Coordinates {
+func getCellCoordinatesByAngle(cell cmodels.Coordinates, angle float64) cmodels.Coordinates {
 	rangle := math.Pi / 180 * angle // in radians
 
 	dx := int64(math.Round(math.Sin(rangle+math.Pi/3) * 2 / sq3))
@@ -56,10 +58,10 @@ func getCellCoordinatesByAngle(cell models.Coordinates, angle float64) models.Co
 
 	// logger.Println(cell, angle, dx, dy, dz)
 
-	return models.NewCoordinates(cell.X+dx, cell.Y+dy, cell.Z+dz)
+	return cmodels.NewCoordinates(cell.X+dx, cell.Y+dy, cell.Z+dz)
 }
 
-func getOrt(cell0 models.Coordinates, cell1 models.Coordinates, direction bool) models.Coordinates {
+func getOrt(cell0 cmodels.Coordinates, cell1 cmodels.Coordinates, direction bool) cmodels.Coordinates {
 	angle := getAngle(cell0, cell1)
 	// logger.Println(cell0, cell1, angle)
 
@@ -78,7 +80,7 @@ func getOrt(cell0 models.Coordinates, cell1 models.Coordinates, direction bool) 
 // Identifies loop direction.
 // false - to left  while moving from the start point
 // true  - to right while moving from the start point
-func getLoopDirection(loop []*models.Cell) (bool, error) {
+func getLoopDirection(loop []*cmodels.Cell) (bool, error) {
 	if len(loop) < 4 {
 		return false, errors.New("Loop is too small")
 	}
@@ -87,7 +89,7 @@ func getLoopDirection(loop []*models.Cell) (bool, error) {
 		return false, errors.New("Loop is invalid")
 	}
 
-	startAngle := getAngle(loop[0].Crd.Cell, loop[1].Crd.Cell)
+	startAngle := getAngle(loop[0].Crd, loop[1].Crd)
 	var totalDiff float64 = 0
 	var totalAngleDiff float64 = 0
 	var countLeft = 0
@@ -98,15 +100,15 @@ func getLoopDirection(loop []*models.Cell) (bool, error) {
 			continue
 		}
 
-		absoluteAngle := getAngle(cell.Crd.Cell, loop[i+1].Crd.Cell)
-		previousAngle := getAngle(loop[i-1].Crd.Cell, cell.Crd.Cell)
+		absoluteAngle := getAngle(cell.Crd, loop[i+1].Crd)
+		previousAngle := getAngle(loop[i-1].Crd, cell.Crd)
 		relativeToStartAngle := math.Mod(360+absoluteAngle-startAngle, 360)
 		relativeToPreviousAngle := math.Mod(360+absoluteAngle-previousAngle, 360)
 		if relativeToPreviousAngle >= 180 {
 			relativeToPreviousAngle = relativeToPreviousAngle - 360
 		}
 		rangle := math.Pi / 180 * relativeToStartAngle // in radians
-		logger.Println("direction angle:", cell.Crd.Cell, loop[i+1].Crd.Cell, absoluteAngle, relativeToStartAngle, relativeToPreviousAngle)
+		logger.Println("direction angle:", cell.Crd, loop[i+1].Crd, absoluteAngle, relativeToStartAngle, relativeToPreviousAngle)
 
 		diff := math.Sin(rangle) / sq3 * 2
 		totalDiff = totalDiff + diff
@@ -151,7 +153,7 @@ func getLoopDirection(loop []*models.Cell) (bool, error) {
 	// }
 }
 
-func findCellsInsideLoop(loop []*models.Cell) ([]models.Coordinates, error) {
+func findCellsInsideLoop(loop []*cmodels.Cell) ([]cmodels.Coordinates, error) {
 	if loop[0] != loop[len(loop)-1] {
 		return nil, errors.New("Loop is invalid")
 	}
@@ -161,11 +163,11 @@ func findCellsInsideLoop(loop []*models.Cell) ([]models.Coordinates, error) {
 		return nil, err
 	}
 
-	insideCells := make([]models.Coordinates, 0)
-	newCells := make([]models.Coordinates, 0)
-	prevCells := make([]models.Coordinates, len(loop))
+	insideCells := make([]cmodels.Coordinates, 0)
+	newCells := make([]cmodels.Coordinates, 0)
+	prevCells := make([]cmodels.Coordinates, len(loop))
 	for i, cell := range loop {
-		prevCells[i] = cell.Crd.Cell
+		prevCells[i] = cell.Crd
 	}
 
 	for {
@@ -190,7 +192,7 @@ func findCellsInsideLoop(loop []*models.Cell) ([]models.Coordinates, error) {
 				}
 				if !found {
 					for _, nc := range loop {
-						if nc.Crd.Cell.X == ncellCrd.X && nc.Crd.Cell.Y == ncellCrd.Y && nc.Crd.Cell.Z == ncellCrd.Z {
+						if nc.Crd.X == ncellCrd.X && nc.Crd.Y == ncellCrd.Y && nc.Crd.Z == ncellCrd.Z {
 							found = true
 							break
 						}
@@ -207,38 +209,38 @@ func findCellsInsideLoop(loop []*models.Cell) ([]models.Coordinates, error) {
 		} else {
 			insideCells = append(insideCells, newCells...)
 			prevCells = newCells
-			newCells = make([]models.Coordinates, 0)
+			newCells = make([]cmodels.Coordinates, 0)
 		}
 	}
 
 	return insideCells, nil
 }
 
-func (store *Store) populateLoop(loop []*models.Cell, playerID uuid.UUID) ([]models.Coordinates, error) {
+func (store *Store) populateLoop(loop []*cmodels.Cell, playerID uuid.UUID) ([]cmodels.Coordinates, error) {
 	if loop[0] != loop[len(loop)-1] {
 		return nil, errors.New("Loop is invalid")
 	}
 
-	allCells := make([]models.Coordinates, len(loop))
+	allCells := make([]cmodels.Coordinates, len(loop))
 	for i, cell := range loop {
-		allCells[i] = cell.Crd.Cell
+		allCells[i] = cell.Crd
 	}
 
 	for {
-		newCells := make([]models.Coordinates, 0)
+		newCells := make([]cmodels.Coordinates, 0)
 		for _, cell0 := range allCells {
 			for _, cell1 := range allCells {
-				if cell0 != cell1 && models.AreNeighbours(cell0, cell1) {
+				if cell0 != cell1 && cmodels.AreNeighbours(cell0, cell1) {
 					ort0 := getOrt(cell0, cell1, true)
-					ortCell0 := store.field.Get(models.NewCoordinates(0, 0, 0)).Get(ort0)
-					if ortCell0 != nil && ortCell0.CellType == models.CellTypeWall && ortCell0.PlayerID == playerID {
+					ortCell0 := store.field.Get(ort0)
+					if ortCell0 != nil && ortCell0.CellType == cmodels.CellTypeWall && ortCell0.PlayerID == playerID {
 						if !existsCrd(newCells, ort0) && !existsCrd(allCells, ort0) {
 							newCells = append(newCells, ort0)
 						}
 					}
 					ort1 := getOrt(cell0, cell1, false)
-					ortCell1 := store.field.Get(models.NewCoordinates(0, 0, 0)).Get(ort1)
-					if ortCell1 != nil && ortCell1.CellType == models.CellTypeWall && ortCell1.PlayerID == playerID {
+					ortCell1 := store.field.Get(ort1)
+					if ortCell1 != nil && ortCell1.CellType == cmodels.CellTypeWall && ortCell1.PlayerID == playerID {
 						if !existsCrd(newCells, ort1) && !existsCrd(allCells, ort1) {
 							newCells = append(newCells, ort1)
 						}
@@ -258,21 +260,21 @@ func (store *Store) populateLoop(loop []*models.Cell, playerID uuid.UUID) ([]mod
 	return allCells, nil
 }
 
-func (store *Store) findNextLoopStart(component *models.Component, page *models.Page) *models.Cell {
-	wallsWithOtherNeighbours := make([]*models.Cell, 0)
+func (store *Store) findNextLoopStart(component *cmodels.Component) *cmodels.Cell {
+	wallsWithOtherNeighbours := make([]*cmodels.Cell, 0)
 	for _, wall := range component.Walls {
-		neighbours := page.GetNeibhours(wall.Crd.Cell)
+		neighbours := store.field.GetNeibhours(wall.Crd)
 
 		otherNeighboursPresent := false
 		for _, n := range neighbours {
 			// if n == nil {
 			// 	logger.Println("findNextLoopStart: nil neighbour")
 			// } else {
-			// 	logger.Printf("findNextLoopStart: neighbour [%v]: %v %v", wall.Crd.Cell, n.CellType, n.PlayerID)
+			// 	logger.Printf("findNextLoopStart: neighbour [%v]: %v %v", wall.Crd, n.CellType, n.PlayerID)
 			// }
 			if n == nil ||
-				n.CellType == models.CellTypeBug ||
-				(n.CellType == models.CellTypeWall && n.PlayerID != wall.PlayerID) {
+				n.CellType == cmodels.CellTypeBug ||
+				(n.CellType == cmodels.CellTypeWall && n.PlayerID != wall.PlayerID) {
 				otherNeighboursPresent = true
 				break
 			}
@@ -293,15 +295,15 @@ func (store *Store) findNextLoopStart(component *models.Component, page *models.
 	return wall
 }
 
-func processComponent(component *models.Component, page *models.Page) bool {
-	start := store.findNextLoopStart(component, page)
-	// var start *models.Cell = store.field.Get(models.NewCoordinates(0, 0, 0)).Get(models.NewCoordinates(0, 2, -2)) // circle_wall_1.json
-	//var start *models.Cell = store.field.Get(models.NewCoordinates(0, 0, 0)).Get(models.NewCoordinates(8, -9, 1)) // circle_wall_0.json
-	//var start *models.Cell = store.field.Get(models.NewCoordinates(0, 0, 0)).Get(models.NewCoordinates(-1, -4, 5)) // circle_wall_right_0.json
-	// var start *models.Cell = store.field.Get(models.NewCoordinates(0, 0, 0)).Get(models.NewCoordinates(5, -7, 2)) // circle_wall_right_1.json
-	// var start *models.Cell = store.field.Get(models.NewCoordinates(0, 0, 0)).Get(models.NewCoordinates(5, 0, -5)) // circle_wall_1.json
-	// var start *models.Cell = store.field.Get(models.NewCoordinates(0, 0, 0)).Get(models.NewCoordinates(3, -2, -1)) // circle_wall_1.json
-	// var start *models.Cell = store.field.Get(models.NewCoordinates(0, 0, 0)).Get(models.NewCoordinates(4, -1, -3)) // circle_wall_2.json
+func processComponent(component *cmodels.Component) bool {
+	start := store.findNextLoopStart(component)
+	// var start *cmodels.Cell = store.field.Get(cmodels.NewCoordinates(0, 2, -2)) // circle_wall_1.json
+	//var start *cmodels.Cell = store.field.Get(cmodels.NewCoordinates(8, -9, 1)) // circle_wall_0.json
+	//var start *cmodels.Cell = store.field.Get(cmodels.NewCoordinates(-1, -4, 5)) // circle_wall_right_0.json
+	// var start *cmodels.Cell = store.field.Get(cmodels.NewCoordinates(5, -7, 2)) // circle_wall_right_1.json
+	// var start *cmodels.Cell = store.field.Get(cmodels.NewCoordinates(5, 0, -5)) // circle_wall_1.json
+	// var start *cmodels.Cell = store.field.Get(cmodels.NewCoordinates(3, -2, -1)) // circle_wall_1.json
+	// var start *cmodels.Cell = store.field.Get(cmodels.NewCoordinates(4, -1, -3)) // circle_wall_2.json
 	if start == nil {
 		logger.Println("loop start not found")
 		return false
@@ -316,7 +318,7 @@ func processComponent(component *models.Component, page *models.Page) bool {
 
 	logger.Println("loop:")
 	for _, c := range loop {
-		logger.Println(c.Crd.Cell)
+		logger.Println(c.Crd)
 	}
 
 	direction, err := getLoopDirection(loop)
@@ -348,15 +350,12 @@ func processComponent(component *models.Component, page *models.Page) bool {
 	}
 
 	for _, crd := range insideCells {
-		cell := page.Get(crd)
-		if cell == nil || cell.CellType != models.CellTypeWall || cell.PlayerID != start.PlayerID {
+		cell := store.field.Get(crd)
+		if cell == nil || cell.CellType != cmodels.CellTypeWall || cell.PlayerID != start.PlayerID {
 			logger.Println("inside cell:", crd)
 
 			var event models.Event = models.NewSetWallEvent(
-				models.FullCoordinates{
-					Page: models.NewCoordinates(0, 0, 0),
-					Cell: crd,
-				},
+				crd,
 				start.PlayerID)
 			store.Handle(&event)
 		}
@@ -373,8 +372,6 @@ func (store *Store) startRemovingImmortals() {
 	defer f.Close()
 	logger = log.New(f, "", os.O_RDWR|os.O_CREATE|os.O_APPEND)
 
-	page := store.field.Get(models.NewCoordinates(0, 0, 0))
-
 	for {
 		if store.components.Len() == 0 {
 			logger.Println("no components")
@@ -382,8 +379,8 @@ func (store *Store) startRemovingImmortals() {
 			continue
 		}
 
-		bigComponents := make([]*models.Component, 0)
-		store.components.Range(func(key uint, cmp *models.Component) bool {
+		bigComponents := make([]*cmodels.Component, 0)
+		store.components.Range(func(key uint, cmp *cmodels.Component) bool {
 			// logger.Println("wall count", cID, len(cmp.Walls))
 			if len(cmp.Walls) >= 10 {
 				bigComponents = append(bigComponents, cmp)
@@ -398,7 +395,7 @@ func (store *Store) startRemovingImmortals() {
 
 		immortalsWereFound := false
 		for _, component := range bigComponents {
-			f := processComponent(component, page)
+			f := processComponent(component)
 			immortalsWereFound = immortalsWereFound || f
 			logger.Println("immortals found: ", component.ID, f)
 		}
@@ -411,7 +408,7 @@ func (store *Store) startRemovingImmortals() {
 	}
 }
 
-func exists(list []*models.Cell, element *models.Cell) bool {
+func exists(list []*cmodels.Cell, element *cmodels.Cell) bool {
 	for _, el := range list {
 		if el == element {
 			return true
@@ -420,7 +417,7 @@ func exists(list []*models.Cell, element *models.Cell) bool {
 
 	return false
 }
-func existsCrd(list []models.Coordinates, element models.Coordinates) bool {
+func existsCrd(list []cmodels.Coordinates, element cmodels.Coordinates) bool {
 	for _, el := range list {
 		if el == element {
 			return true
@@ -430,8 +427,8 @@ func existsCrd(list []models.Coordinates, element models.Coordinates) bool {
 	return false
 }
 
-func except(list0 []*models.Cell, list1 []*models.Cell) []*models.Cell {
-	result := make([]*models.Cell, 0)
+func except(list0 []*cmodels.Cell, list1 []*cmodels.Cell) []*cmodels.Cell {
+	result := make([]*cmodels.Cell, 0)
 
 	for _, el := range list0 {
 		if !exists(list1, el) {
@@ -442,37 +439,32 @@ func except(list0 []*models.Cell, list1 []*models.Cell) []*models.Cell {
 	return result
 }
 
-func (store *Store) findWallLoop(playerID uuid.UUID, startCell *models.Cell) ([]*models.Cell, bool) {
-	return findWallLoopRec(store, playerID, startCell, nil, make([]*models.Cell, 0), make([]*models.Cell, 0))
+func (store *Store) findWallLoop(playerID uuid.UUID, startCell *cmodels.Cell) ([]*cmodels.Cell, bool) {
+	return findWallLoopRec(store, playerID, startCell, nil, make([]*cmodels.Cell, 0), make([]*cmodels.Cell, 0))
 }
 
 func findWallLoopRec(
 	store *Store,
 	playerID uuid.UUID,
-	currentCell *models.Cell,
-	previousCell *models.Cell,
-	currentPath []*models.Cell,
-	visitedCells []*models.Cell,
-) ([]*models.Cell, bool) {
+	currentCell *cmodels.Cell,
+	previousCell *cmodels.Cell,
+	currentPath []*cmodels.Cell,
+	visitedCells []*cmodels.Cell,
+) ([]*cmodels.Cell, bool) {
 
-	logger.Println("findWallLoopRec: cell:", currentCell.Crd.Cell)
+	logger.Println("findWallLoopRec: cell:", currentCell.Crd)
 	newPath := append(currentPath, currentCell)
 
-	page := store.field.Get0()
-	if page == nil {
-		return currentPath, false
-	}
-
-	wallNeghbours := page.GetOwnWallNeibhours(currentCell.Crd.Cell, playerID)
+	wallNeghbours := store.field.GetOwnWallNeibhours(currentCell.Crd, playerID)
 	// End of a wall line. Loop is not found.
 	if len(wallNeghbours) == 0 {
 		return currentPath, false
 	}
 
 	logger.Println("wallNeghbours:")
-	var foundLoopEnd *models.Cell = nil
+	var foundLoopEnd *cmodels.Cell = nil
 	for _, n := range wallNeghbours {
-		log.Print(n.Crd.Cell)
+		log.Print(n.Crd)
 		for _, c := range currentPath {
 			if n != previousCell && c != previousCell && n == c {
 				if len(currentPath) > 1 && n != currentPath[len(currentPath)-2] {
@@ -483,7 +475,7 @@ func findWallLoopRec(
 	}
 	if foundLoopEnd != nil {
 		logger.Println("found loop")
-		pathWithoutHead := make([]*models.Cell, 0)
+		pathWithoutHead := make([]*cmodels.Cell, 0)
 		startFound := false
 		for _, cell := range newPath {
 			startFound = startFound || foundLoopEnd == cell
@@ -494,9 +486,9 @@ func findWallLoopRec(
 		return append(pathWithoutHead, foundLoopEnd), true
 	}
 
-	filteredWallNeighbours := make([]*models.Cell, 0)
+	filteredWallNeighbours := make([]*cmodels.Cell, 0)
 	for _, n := range wallNeghbours {
-		wallNeighboursOfNeighbour := page.GetOwnWallNeibhours(n.Crd.Cell, playerID)
+		wallNeighboursOfNeighbour := store.field.GetOwnWallNeibhours(n.Crd, playerID)
 
 		// We are interested only in walls not surrounded by other own walls.
 		// And which have other neighbour walls except previous ones.
@@ -516,24 +508,24 @@ func findWallLoopRec(
 	if previousCell == nil {
 		currentAngle = 0
 	} else {
-		currentAngle = getAngle(currentCell.Crd.Cell, previousCell.Crd.Cell)
+		currentAngle = getAngle(currentCell.Crd, previousCell.Crd)
 	}
 	logger.Println("currentAngle:", currentAngle)
 
 	// We are going to get wall with angle closest to the one we came.
 	// So we need to sort walls.
 	sort.SliceStable(filteredWallNeighbours, func(i, j int) bool {
-		firstAngle := getAngle(currentCell.Crd.Cell, filteredWallNeighbours[i].Crd.Cell)
-		secondAngle := getAngle(currentCell.Crd.Cell, filteredWallNeighbours[j].Crd.Cell)
+		firstAngle := getAngle(currentCell.Crd, filteredWallNeighbours[i].Crd)
+		secondAngle := getAngle(currentCell.Crd, filteredWallNeighbours[j].Crd)
 		return math.Mod(360+firstAngle-currentAngle, 360) < math.Mod(360+secondAngle-currentAngle, 360)
 	})
 
 	logger.Println("filteredWallNeighbours:")
 	for _, n := range filteredWallNeighbours {
-		angle := getAngle(currentCell.Crd.Cell, n.Crd.Cell)
+		angle := getAngle(currentCell.Crd, n.Crd)
 		diff0 := 360 + angle - currentAngle
 		diff := math.Mod(diff0, 360)
-		log.Print(n.Crd.Cell, angle, currentAngle, diff0, diff)
+		log.Print(n.Crd, angle, currentAngle, diff0, diff)
 	}
 
 	newVisitedCells := append(visitedCells, currentCell)

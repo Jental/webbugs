@@ -4,12 +4,15 @@ import (
 	"math"
 	"sync"
 	"webbugs-server/models"
+
+	cmodels "github.com/jental/webbugs-common-go/models"
 )
 
 const partSize = 3
+const MaxFieldRadius = 1
 
-var maxFieldRadiusSq = int64(math.Pow(float64(models.MaxFieldRadius), 2))
-var maxFieldRadiusPow3 = int64(math.Pow(float64(models.MaxFieldRadius), 3))
+var maxFieldRadiusSq = int64(math.Pow(float64(MaxFieldRadius), 2))
+var maxFieldRadiusPow3 = int64(math.Pow(float64(MaxFieldRadius), 3))
 
 // Locker - mutextes for fields
 type Locker struct {
@@ -27,16 +30,13 @@ func NewLocker(pageRadius uint) Locker {
 }
 
 // Key - calculates keys
-func (locker *Locker) Key(crd models.FullCoordinates) int64 {
+func (locker *Locker) Key(crd cmodels.Coordinates) int64 {
 	// field: return int64(p.X) + 4*MaxFieldRadius*int64(p.Y) + 16*maxFieldRadiusSq*int64(p.Z)
 	// page: 	return int64(crd.X) + 4*int64(page.Radius)*int64(crd.Y) + 16*int64(math.Pow(float64(page.Radius), 2))*int64(crd.Z)
 
-	return int64(crd.Page.X) +
-		2*models.MaxFieldRadius*int64(crd.Page.Y) +
-		4*maxFieldRadiusSq*int64(crd.Page.Z) +
-		8*maxFieldRadiusPow3*int64(math.Floor(float64(crd.Cell.X)/3)) +
-		16*maxFieldRadiusPow3*locker.radius*int64(math.Floor(float64(crd.Cell.Y)/3)) +
-		32*maxFieldRadiusPow3*locker.raduisSq*int64(math.Floor(float64(crd.Cell.Z)/3))
+	return maxFieldRadiusPow3*int64(math.Floor(float64(crd.X)/3)) +
+		2*maxFieldRadiusPow3*locker.radius*int64(math.Floor(float64(crd.Y)/3)) +
+		4*maxFieldRadiusPow3*locker.raduisSq*int64(math.Floor(float64(crd.Z)/3))
 }
 
 // Lock - locks field part
