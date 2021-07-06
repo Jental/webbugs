@@ -5,3 +5,4 @@ yarn.lock
 yarn-error.log
 workspace.code-workspace
 webbugs-server-go/logs/
+webbugs-common-go/
